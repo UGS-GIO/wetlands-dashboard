@@ -1,0 +1,82 @@
+,parameter,definition,units,lrl,mdl,method,bottle,category
+1,alk,Alkalinity-Total,mg/l,4,2,3230B,chemistry,genchem
+2,cl,Chloride,mg/l,3.5,0.44,325.2,chemistry,genchem
+3,ec25_lab,"Conductivity, in lab",umhos/cm,2,0.083,120.1,chemistry,genchem
+4,so4,Sulfate,mg/l,20,9.04,375.2,chemistry,genchem
+5,tds,Total Dissolved Solids,mg/l,20,11.7,160.1,chemistry,genchem
+6,tss,Total Suspended Solids,mg/l,4,1.488,160.2,chemistry,genchem
+7,tvs,Total Volatile Solids,mg/l,4,2.27,160.4,chemistry,genchem
+8,turbidity,Turbidity,NTU,1,0.0153,180.1,chemistry,genchem
+9,alk_co3x,Alkalinity-Calcium Carbonate,mg/l,4,3.88,2320B,chemistry,NA
+10,alk_co3,Alkalinity-Carbonate,mg/l,0.001,0.001,2320B,chemistry,NA
+11,alk_hco3,Alkalinity-Bicarbonate,mg/l,0.001,0.001,2320B,chemistry,NA
+12,alk_carb,Alkalinity-Carbonate,mg/l,0.001,0.001,2320B,chemistry,NA
+13,alk_oh,Alkalinity-Hydroxide,mg/l,0.001,0.001,2320B,chemistry,NA
+14,alk_co2,Alkalinity-Free Carbon Dioxide,mg/l,0.001,0.001,2320B,chemistry,NA
+15,h2s,Sulfide,mg/l,0.1,0.045,376.2,sulfide,genchem
+16,cbod,Biological Oxygen Demand,mg/l,3,2.376,5210B,bod,nuts
+17,nh4_t,"Ammonia as Nitrogen, Non-filtered",mg/l,0.05,0.017,350.1,total nutrients,nuts
+18,no3_t,"Nitrate + Nitrite as Nitrogen, Non-filtered",mg/l,0.1,0.025,353.2,total nutrients,nuts
+19,tn_t,"Total Nitrogen, Non-filtered",mg/l,0.2,0.185,LACHAT,total nutrients,nuts
+20,toc,"Total Organic Carbon, Non-filtered",mg/l,0.5,0.03,5310B,total nutrients,nuts
+21,po4_t,"Total Phosphate, Non-filtered",mg/l,0.003,0.0028,356.1,total nutrients,nuts
+22,hg_t,"Mercury (Hg), Non-filtered",ug/l,0.2,0.1,245.1,total metals,toxic
+23,ag_t,"Silver (Ag), Non-filtered",ug/l,0.5,0.25,200.8,total metals,toxic
+24,al_t,"Aluminum (Al), Non-filtered",ug/l,10,5,200.8,total metals,toxic
+25,as_t,"Arsenic (As), Non-filtered",ug/l,1,0.5,200.8,total metals,toxic
+26,ba_t,"Barium (Ba), Non-filtered",ug/l,10,5,200.8,total metals,toxic
+27,be_t,"Beryllium (Be), Non-filtered",ug/l,1,0.5,200.8,total metals,toxic
+28,cd_t,"Cadmium (Cd), Non-filtered",ug/l,0.1,0.05,200.8,total metals,toxic
+29,cr_t,"Chromium (Cr), Non-filtered",ug/l,2,1,200.8,total metals,toxic
+30,cu_t,"Copper (Cu), Non-filtered",ug/l,1,0.5,200.8,total metals,toxic
+31,mn_t,"Manganese (Mn), Non-filtered",ug/l,5,2.5,200.8,total metals,toxic
+32,ni_t,"Nickel (Ni), Non-filtered",ug/l,5,2.5,200.8,total metals,toxic
+33,pb_t,"Lead (Pb), Non-filtered",ug/l,0.1,0.05,200.8,total metals,toxic
+34,se_t,"Selenium (Se), Non-filtered",ug/l,1,0.5,200.8,total metals,toxic
+35,zn_t,"Zinc (Zn), Non-filtered",ug/l,10,5,200.8,total metals,toxic
+36,b_t,"Boron (B), Non-filtered",ug/l,30,15,200.8,total metals,toxic
+37,ca_t,"Calcium (Ca), Non-filtered",mg/l,1,0.5,200.8,total metals,toxic
+38,fe_t,"Iron (Fe), Non-filtered",ug/l,30,15,200.8,total metals,toxic
+39,k_t,"Potassium (K), Non-filtered",mg/l,1,0.5,200.8,total metals,toxic
+40,mg_t,"Magnesium (Mg), Non-filtered",mg/l,1,0.5,200.8,total metals,toxic
+41,na_t,"Sodium (Na), Non-filtered",mg/l,1,0.5,200.8,total metals,toxic
+42,chla_aa," Chlorophyll-A After Acid, Filtered",mg,0.004,0.000855,10200H,chla,NA
+43,nh4_d," Ammonia as Nitrogen, Filtereded",mg/l,0.05,0.017,350.1,filtered nutrients,nuts
+44,no3_d,"Nitrate + Nitrite as Nitrogen, Filtered",mg/l,0.1,0.025,353.2,filtered nutrients,nuts
+45,tn_d,"Total Nitrogen, Filtered",mg/l,0.2,0.185,LACHAT,filtered nutrients,nuts
+46,doc,"Dissolved Organic Carbon, Filtered",mg/l,0.5,0.03,5310B,filtered nutrients,nuts
+47,po4_d,"Total Phosphate, Filtered",mg/l,0.003,0.0028,365.1,filtered nutrients,nuts
+48,hg_d,"Mercury (Hg), Filtered",ug/l,0.2,0.1,245.1,filtered metals,toxic
+49,ag_d,"Silver (Ag), Filtered",ug/l,0.5,0.25,200.8,filtered metals,NA
+50,al_d,"Aluminum (Al), Filtered",ug/l,10,5,200.8,filtered metals,toxic
+51,as_d,"Arsenic (As), Filtered",ug/l,1,0.5,200.8,filtered metals,toxic
+52,ba_d,"Barium (Ba), Filtered",ug/l,10,5,200.8,filtered metals,toxic
+53,be_d,"Beryllium (Be), Filtered",ug/l,1,0.5,200.8,filtered metals,toxic
+54,cd_d,"Cadmium (Cd), Filtered",ug/l,0.1,0.05,200.8,filtered metals,toxic
+55,cr_d,"Chromium (Cr), Filtered",ug/l,2,1,200.8,filtered metals,toxic
+56,cu_d,"Copper (Cu), Filtered",ug/l,1,0.5,200.8,filtered metals,toxic
+57,mn_d,"Manganese (Mn), Filtered",ug/l,5,2.5,200.8,filtered metals,toxic
+58,ni_d,"Nickel (Ni), Filtered",ug/l,5,2.5,200.8,filtered metals,toxic
+59,pb_d,"Lead (Pb), Filtered",ug/l,0.1,0.05,200.8,filtered metals,toxic
+60,se_d,"Selenium (Se), Filtered",ug/l,1,0.5,200.8,filtered metals,toxic
+61,zn_d,"Zinc (Zn), Filtered",ug/l,10,5,200.8,filtered metals,toxic
+62,b_d,"Boron (B), Filtered",ug/l,30,15,200.8,filtered metals,toxic
+63,ca_d,"Calcium (Ca), Filtered",mg/l,1,0.5,200.8,filtered metals,toxic
+64,fe_d,"Iron (Fe), Filtered",ug/l,30,15,200.8,filtered metals,toxic
+65,k_d,"Potassium (K), Filtered",mg/l,1,0.5,200.8,filtered metals,toxic
+66,mg_d,"Magnesium (Mg), Filtered",mg/l,1,0.5,200.8,filtered metals,toxic
+67,na_d,"Sodium (Na), Filtered",mg/l,1,0.5,200.8,filtered metals,toxic
+68,alk_ph,Alkalinity-pH,pH,0.001,0.001,2320B,chemistry,NA
+69,cha_vol,Volume of water filtered for chlorophyll-a,liters,NA,NA,for calculating chla as mg/l,chla,NA
+70,ph_lab,"pH, in lab",pH,0.001,0.001,150.1,chemistry,NA
+71,chla,chlorophyll-a,mg/l,0.1,0.05,10200H,chla,NA
+72,co_d,"Cobalt (Co), Filtered",ug/l,30,15,200.8,filtered metals,toxic
+73,do_conc,Dissolved Oxygen concentration,mg/L,0,0,multi-parameter probe in field,field,polind
+74,do_sat,Dissolved Oxygen saturation,percent,0,0,multi-parameter probe in field,field,polind
+75,ec_p,"Electrical Conductivity, pore water in field",uS/cm,100,100,conductivity of pore water,pore water,polind
+76,ec25,"Electrical Conductivity, in field",uS/cm,5,5,multi-parameter probe in field,field,polind
+77,fl,Fluoride,mg/l,0.01,0.01,300,chemistry,genchem
+78,hard,"Hardness, Filtered",mg/l,1,0.5,"2340B, calculated from ca_d and mg_d (2.497(ca_d) + 4.118(mg_d))",filtered metals,NA
+79,temp,Temperature,C,-5,-5,multi-parameter probe in field,field,polind
+80,tkn,"Total Kjeldahl Nitrogen, Non-filtered",mg/l,0.082,0.03,351.4,total nutrients,nuts
+81,ph,pH,pH,0.01,0.01,multi-parameter probe in field,field,polind

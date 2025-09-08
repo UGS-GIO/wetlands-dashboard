@@ -1,0 +1,48 @@
+"","parameter","definition","units","method","mdl"
+"1","nh4n_s","Ammonium-Nitrogen, sediment","mg/kg","2N KCl extract",2.5
+"2","no3n_s","Nitrate-Nitrogen, sediment","mg/kg","2N KCl extract",2.5
+"3","nh4n_e","Ammonium-Nitrogen, filtered extract","mg/l","Cadmium Reduction - Lachat",0.5
+"4","no3n_e","Nitrate-Nitrogen, filtered extract","mg/l","Cadmium Reduction - Lachat",0.5
+"5","po4p_s","Available Phosphorus","mg/kg","Olsen NaHCO3",0.5
+"6","al_s","Aluminum (Al), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",5e-05
+"7","as_s","Arsenic (As), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"8","b_s","Boron (B), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"9","ba_s","Barium (Ba), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.2
+"10","ca_s","Calcium (Ca), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-05
+"11","cd_s","Cadmium (Cd), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"12","co_s","Cobalt (Co), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"13","cr_s","Chromium (Cr), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"14","cu_s","Copper (Cu), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"15","fe_s","Iron (Fe), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-05
+"16","k_s","Potassium (K), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-04
+"17","pb_s","Lead (Pb), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"18","mg_s","Magnesium (Mg), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-05
+"19","mn_s","Manganese (Mn), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"20","mo_s","Molybdenum (Mo), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"21","na_s","Sodium (Na), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-05
+"22","ni_s","Nickel (Ni), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"23","p_s","Phosphorus (P) element scan, sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-04
+"24","s_s","Sulfur (S), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",1e-04
+"25","se_s","Selenium (Se), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"26","sr_s","Strontium (Sr), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"27","zn_s","Zinc (Zn), sediment","mg/kg","EPA 3050 Digestion + ICP analysis",0.1
+"28","hg_s","Mercury (Hg), sediment","ug/kg","EPA 3050 Digestion + ICP analysis",0.001
+"29","so4s_s","Sulfate, sediment","mg/kg","ask USUAL",0.01
+"30","ec_s","electrical conductivity","dS/m","saturated paste",0.01
+"31","b_wse","Boron (B), sediment WSE","mg/kg","Water-Soluble Elements saturation paste",0.001
+"32","ca_wse","Calcium (Ca), WSE","mg/kg","Water-Soluble Elements saturation paste",0.001
+"33","k_wse","Potassium (K), sediment WSE","mg/kg","Water-Soluble Elements saturation paste",0.005
+"34","mg_wse","Magnesium (Mg), sediment WSE","mg/kg","Water-Soluble Elements saturation paste",0.001
+"35","na_wse","Sodium (Na), sediment WSE","mg/kg","Water-Soluble Elements saturation paste",0.001
+"36","s_wse","Sulfur (S), sediment WSE","mg/kg","Water-Soluble Elements saturation paste",0.01
+"37","tc_s","Total Carbon, Sediment","mg/kg","Combustion",0.01
+"38","tn_s","Total Nitrogen, sediment","mg/kg","Combustion",0.01
+"39","tp_s","Total Phosphorus, sediment","g/kg","ask TH",NA
+"40","c_perc_s","Soil Carbon","percent","Combustion",0.01
+"41","cn_rat","Carbon to Nitrogen ratio, soil","C:N","calculated ratio",NA
+"42","d13c_s","Carbon-13 isotope","delta","continuous flow mass spectrometry",NA
+"43","d15n_s","Nitrogen-15 isotope","delta","continuous flow mass spectrometry",NA
+"44","loi","Organic Matter, Loss on Ignition","percent","Loss on Ignition/Ash",1
+"45","n_perc_s","Soil Nitrogen","percent","Combustion",0.01
+"46","orgmat_s","Organic Matter, Sediment","percent","Walkley Black",1
+"47","ph_s","pH, sediment","pH","saturated paste",0.01

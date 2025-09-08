@@ -1,0 +1,18 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_IMAGE_TAG}', '.']
+  
+  # Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${_IMAGE_TAG}']
+
+# Substitutions (you can override these with --substitutions flag)
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: shiny-repo
+  _IMAGE_NAME: wetland-dashboard
+  _IMAGE_TAG: latest
+
+# Build timeout
+timeout: 1200s
