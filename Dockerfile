@@ -1,49 +1,55 @@
 # Get shiny server plus tidyverse packages image
-# Use platform specification for compatibility
 FROM --platform=linux/amd64 rocker/shiny-verse:latest
 
 # System libraries of general use
 RUN apt-get update && apt-get install -y \
-    curl \
-    sudo \
-    pandoc \
-    libcurl4-gnutls-dev \
-    libcairo2-dev \
-    libxt-dev \
-    libssl-dev \
-    libssh2-1-dev \
-    ## System libraries for sf package
-    libudunits2-dev \
-    libgdal-dev \
-    libgeos-dev \
-    libproj-dev \
-    ## clean up
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/ \
-    && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
+ curl \
+ sudo \
+ pandoc \
+ libcurl4-gnutls-dev \
+ libcairo2-dev \
+ libxt-dev \
+ libssl-dev \
+ libssh2-1-dev \
+ libxml2-dev \
+ libfontconfig1-dev \
+ libharfbuzz-dev \
+ libfribidi-dev \
+ libfreetype6-dev \
+ libpng-dev \
+ libtiff5-dev \
+ libjpeg-dev \
+ libudunits2-dev \
+ libgdal-dev \
+ libgeos-dev \
+ libproj-dev \
+ libmagick++-dev \
+ ## Add cmake for s2 package compilation
+ cmake \
+ ## Or alternatively, install abseil directly (uncomment one of these):
+ # libabsl-dev \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/ \
+ && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
-# Install R packages required for the dashboard
-# Core Shiny and dashboard packages
-RUN R -e "install.packages('shiny', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('flexdashboard', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('rmarkdown', repos='http://cran.rstudio.com/')"
+# Install all required R packages
+RUN R -e "options(repos = 'https://cloud.r-project.org/'); \
+    install.packages(c('shiny', 'flexdashboard', 'rmarkdown', 'fontawesome', \
+                      'leaflet', 'tidyr', 'dplyr', 'ggplot2', 'sf', \
+                      'kableExtra', 'scales', 'DT'), \
+                    dependencies = TRUE); \
+    if (!all(c('leaflet', 'shiny', 'flexdashboard', 'sf', 'DT') %in% rownames(installed.packages()))) { \
+        stop('Some packages failed to install'); \
+    } else { \
+        cat('All packages installed successfully!\n'); \
+    }"
 
-# Visualization packages
-RUN R -e "install.packages('leaflet', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('ggplot2', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('DT', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('kableExtra', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('fontawesome', repos='http://cran.rstudio.com/')"
+# Verify critical packages can be loaded
+RUN R -e "library(leaflet); library(shiny); library(flexdashboard); library(sf); library(DT); \
+          cat('All critical libraries loaded successfully!\n')"
 
-# Data manipulation packages
-RUN R -e "install.packages('tidyr', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('dplyr', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('sf', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('scales', repos='http://cran.rstudio.com/')"
-
-# Optional: Database packages (commented out since you're using CSV)
-# RUN R -e "install.packages('DBI', repos='http://cran.rstudio.com/')"
-# RUN R -e "install.packages('RPostgres', repos='http://cran.rstudio.com/')"
+# List installed packages for debugging
+RUN R -e "cat('Installed packages:\n'); print(rownames(installed.packages()))"
 
 # Clean up
 RUN rm -rf /tmp/downloaded_packages/ /tmp/*.rds
@@ -57,8 +63,8 @@ COPY app /srv/shiny-server/
 # Remove default index.html if it exists
 RUN rm -f /srv/shiny-server/index.html
 
-# Make the ShinyApp available at port 5000
-EXPOSE 5000
+# Make the ShinyApp available at port 8080
+EXPOSE 8080
 
 # Copy shiny app execution file into the Docker image
 COPY shiny-server.sh /usr/bin/shiny-server.sh
@@ -67,5 +73,4 @@ COPY shiny-server.sh /usr/bin/shiny-server.sh
 RUN chmod +x /usr/bin/shiny-server.sh
 
 USER shiny
-
-CMD ["/usr/bin/shiny-server"]
+CMD ["/usr/bin/shiny-server.sh"]
