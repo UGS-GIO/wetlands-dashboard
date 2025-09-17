@@ -23,120 +23,139 @@ library(DT)
 library(httr)
 library(jsonlite)
 
-# PostgREST API base URL
-BASE_URL <- "https://postgrest-seamlessgeolmap-734948684426.us-central1.run.app"
+# API Configuration
+API_BASE_URL <- "https://postgrest-seamlessgeolmap-734948684426.us-central1.run.app"
+API_SCHEMA <- "wetlands"
 
-# Cache for storing fetched data
-data_cache <- reactiveValues()
+# Cache environment for storing API responses
+api_cache <- new.env()
 
-# Function to fetch data from PostgREST endpoint with error handling
-fetch_postgrest_data <- function(table_name, cache_key = NULL) {
-  # Use cache_key if provided, otherwise use table_name
-  if (is.null(cache_key)) {
-    cache_key <- table_name
+# Function to fetch data from PostgREST API with fallback to CSV
+fetch_data <- function(table_name, csv_filename = NULL) {
+  # Check cache first
+  cache_key <- paste0("wetdash_", table_name)
+  if (exists(cache_key, envir = api_cache)) {
+    cat("Using cached data for", table_name, "\n")
+    return(get(cache_key, envir = api_cache))
   }
   
-  # Check if data is already cached
-  if (!is.null(data_cache[[cache_key]])) {
-    return(data_cache[[cache_key]])
-  }
-  
-  # Construct the endpoint URL
-  endpoint <- paste0(BASE_URL, "/wetdash_", table_name)
-  
+  # Try API first
   tryCatch({
-    # Make the API request
+    url <- paste0(API_BASE_URL, "/wetdash_", table_name)
+    
     response <- GET(
-      endpoint,
-      add_headers(
-        "Accept-Profile" = "wetlands",
-        "Accept" = "application/json"
-      ),
-      timeout(30)  # 30 second timeout
+      url,
+      add_headers("Accept-Profile" = API_SCHEMA),
+      timeout(30)
     )
     
-    # Check if request was successful
-    if (status_code(response) == 200) {
-      # Parse JSON response
-      data <- fromJSON(content(response, "text", encoding = "UTF-8"), flatten = TRUE)
+    status <- status_code(response)
+    
+    if (status == 200) {
+      cat("✅ Successfully fetched", table_name, "from API\n")
+      data <- fromJSON(content(response, "text", encoding = "UTF-8"))
       
-      # Convert to data frame if needed
-      if (!is.data.frame(data)) {
+      # Convert to data frame if it's a list
+      if (is.list(data) && !is.data.frame(data)) {
         data <- as.data.frame(data)
       }
       
-      # Cache the data
-      data_cache[[cache_key]] <- data
+      # Store source info for status display
+      attr(data, "data_source") <- "API"
       
+      # Cache the result
+      assign(cache_key, data, envir = api_cache)
       return(data)
+    } else if (status == 401) {
+      cat("🔒 API returned 401 Unauthorized for", table_name, "- falling back to CSV\n")
+      stop("API Unauthorized")
     } else {
-      stop(paste("API request failed with status code:", status_code(response)))
+      cat("⚠️ API returned status code:", status, "for", table_name, "\n")
+      stop("API request failed with status: ", status)
     }
   }, error = function(e) {
-    showModal(modalDialog(
-      title = "Data Loading Error",
-      paste("Failed to load", table_name, "data from API:", e$message),
-      footer = modalButton("Close"),
-      easyClose = TRUE
-    ))
-    return(NULL)
+    # Fallback to CSV
+    csv_file <- if (is.null(csv_filename)) paste0(table_name, ".csv") else csv_filename
+    
+    if (file.exists(csv_file)) {
+      cat("📁 Using CSV fallback for", table_name, ":", csv_file, "\n")
+      if (grepl("401|Unauthorized", e$message)) {
+        cat("   Reason: API access restricted for this table\n")
+      } else {
+        cat("   Reason:", e$message, "\n")
+      }
+      data <- read.csv(csv_file)
+      
+      # Store source info for status display
+      attr(data, "data_source") <- "CSV"
+      
+      # Cache the CSV data too
+      assign(cache_key, data, envir = api_cache)
+      return(data)
+    } else {
+      stop("Both API and CSV fallback failed for ", table_name, ": ", e$message)
+    }
   })
 }
 
-# Load all required data with error handling and loading indicators
-withProgress(message = 'Loading data from API...', value = 0, {
-  incProgress(1/10, detail = "Loading site attributes...")
-  site_attr <- fetch_postgrest_data('site_attr')
-  
-  incProgress(1/10, detail = "Loading flags...")
-  flags <- fetch_postgrest_data('flags')
-  
-  incProgress(1/10, detail = "Loading invertebrate data...")
-  inverts <- fetch_postgrest_data('inverts')
-  
-  incProgress(1/10, detail = "Loading invertebrate parameters...")
-  invert_taxon <- fetch_postgrest_data('invert_param')
-  
-  incProgress(1/10, detail = "Loading soil data...")
-  soil <- fetch_postgrest_data('soil')
-  
-  incProgress(1/10, detail = "Loading soil parameters...")
-  soil_param <- fetch_postgrest_data('soil_param')
-  
-  incProgress(1/10, detail = "Loading water data...")
-  water <- fetch_postgrest_data('water')
-  
-  incProgress(1/10, detail = "Loading water parameters...")
-  water_param <- fetch_postgrest_data('water_param')
-  
-  # Optional data - commented out as in original
-  # incProgress(1/10, detail = "Loading vegetation data...")
-  # veg <- fetch_postgrest_data('veg')
-  # veg_param <- fetch_postgrest_data('veg_param')
-  
-  # incProgress(1/10, detail = "Loading disturbance data...")
-  # disturb <- fetch_postgrest_data('disturb')
-  # disturb_param <- fetch_postgrest_data('disturb_param')
-  
-  # incProgress(1/10, detail = "Loading structure data...")
-  # structure <- fetch_postgrest_data('structure')
-  # structure_param <- fetch_postgrest_data('structure_param')
-})
-
-# Check if critical data loaded successfully
-if (is.null(site_attr) || is.null(water) || is.null(soil) || is.null(inverts)) {
-  showModal(modalDialog(
-    title = "Critical Error",
-    "Failed to load essential data. Please refresh the page to try again.",
-    footer = NULL,
-    easyClose = FALSE
-  ))
-  stop("Critical data failed to load")
+# Function to clear cache if needed
+clear_cache <- function() {
+  rm(list = ls(envir = api_cache), envir = api_cache)
+  cat("Cache cleared\n")
 }
+
+# Load all data using the new fetch function
+cat("Loading data from API with CSV fallback...\n")
+
+site_attr <- fetch_data("site_attr")
+flags <- fetch_data("flags")
+inverts <- fetch_data("inverts")
+invert_taxon <- fetch_data("invert_param")
+soil <- fetch_data("soil")
+soil_param <- fetch_data("soil_param")
+water <- fetch_data("water")
+water_param <- fetch_data("water_param")
+
+cat("Data loading complete!\n")
+
+# Optional: Add a reactive function to refresh data
+refresh_data <- function() {
+  clear_cache()
+  
+  # Reload all data
+  site_attr <<- fetch_data("site_attr")
+  flags <<- fetch_data("flags")
+  inverts <<- fetch_data("inverts")
+  invert_taxon <<- fetch_data("invert_param")
+  soil <<- fetch_data("soil")
+  soil_param <<- fetch_data("soil_param")
+  water <<- fetch_data("water")
+  water_param <<- fetch_data("water_param")
+  
+  cat("Data refreshed!\n")
+}
+
+# Commented out CSV loading (keep as backup reference)
+# site_attr <- read.csv('site_attr.csv')
+# flags <- read.csv('flags.csv')
+# inverts <- read.csv('inverts.csv')
+# invert_taxon <- read.csv('invert_param.csv')
+# soil <- read.csv('soil.csv')
+# soil_param <- read.csv('soil_param.csv')
+# water <- read.csv('water.csv')
+# water_param <- read.csv('water_param.csv')
+
+#veg <- read.csv('veg.csv')
+#veg_param <- read.csv('veg_param.csv')
+
+#disturb <- read.csv('disturb.csv')
+#disturb_param <- read.csv('disturb_param.csv')
+
+#structure <- read.csv('structure.csv')
+#structure_param <- read.csv('structure_param.csv')
 ```
 
 ```{r setup for pgadmin, eval=FALSE, include=FALSE}
-# This section remains for reference but is not used with API approach
 #packages
 library(DBI)
 
@@ -198,44 +217,6 @@ reverse_wet <- unlist(lapply(names(wet_map), function(k) setNames(rep(k, length(
 site_attr <- site_attr %>% mutate(sysclass = recode(sysclass, !!!reverse_wet))
 ```
 
-```{r, reactive refresh function}
-# Add a refresh button function that clears cache
-observeEvent(input$refresh_data, {
-  withProgress(message = 'Refreshing data from API...', value = 0, {
-    # Clear cache
-    data_cache$site_attr <- NULL
-    data_cache$flags <- NULL
-    data_cache$inverts <- NULL
-    data_cache$invert_param <- NULL
-    data_cache$soil <- NULL
-    data_cache$soil_param <- NULL
-    data_cache$water <- NULL
-    data_cache$water_param <- NULL
-    
-    # Reload data
-    incProgress(1/8, detail = "Loading site attributes...")
-    site_attr <<- fetch_postgrest_data('site_attr')
-    
-    incProgress(1/8, detail = "Loading flags...")
-    flags <<- fetch_postgrest_data('flags')
-    
-    incProgress(1/8, detail = "Loading invertebrate data...")
-    inverts <<- fetch_postgrest_data('inverts')
-    invert_taxon <<- fetch_postgrest_data('invert_param')
-    
-    incProgress(1/8, detail = "Loading soil data...")
-    soil <<- fetch_postgrest_data('soil')
-    soil_param <<- fetch_postgrest_data('soil_param')
-    
-    incProgress(1/8, detail = "Loading water data...")
-    water <<- fetch_postgrest_data('water')
-    water_param <<- fetch_postgrest_data('water_param')
-  })
-  
-  showNotification("Data refreshed successfully!", type = "success")
-})
-```
-
 Background
 ======================================
 Row
@@ -266,8 +247,7 @@ Row
 An explanation of the projects the data was gathered for. Perhaps Links to documents. Contact Information.
 
 ```{r explain text}
-# Add refresh button to the UI
-actionButton("refresh_data", "Refresh Data", icon = icon("refresh"))
+
 ```
 
 Row
@@ -283,6 +263,33 @@ Row
 A **Watershed** (here HUC6/ Accounting Units) has a definition and you can look at their boundaries [here](https://www.arcgis.com/home/item.html?id=5bbefdcd2511472ea9abd0afedb85c7e)
 We have many ways of categorizing wetlands into different types based on how long they are flooded, their position in the landscape, or their dominant plant community. We will use [Cowardin](https://www.fws.gov/media/national-wetland-inventory-wetlands-and-deepwater-map-code-diagram) Systems (palustrine, lacustrine, etc) and Classes (substrate/vegetation type). 
 Level III **ecoregions** divided up large areas based on having similar climate and habitats. They were developed by the [EPA](https://www.epa.gov/eco-research/ecoregions) to explain some things. 
+
+### Data Source Status
+```{r data source status}
+renderText({
+  # Check if any data came from API (cached data will have been fetched from API initially)
+  api_tables <- c("site_attr", "flags", "inverts", "invert_param", "soil", "soil_param", "water", "water_param")
+  cached_count <- length(ls(envir = api_cache))
+  
+  if (cached_count > 0) {
+    paste("✓ Data loaded successfully.", cached_count, "tables cached.")
+  } else {
+    "⚠ Using fallback CSV data."
+  }
+})
+
+# Optional: Add a refresh button
+actionButton("refresh_data", "Refresh Data", class = "btn-sm")
+
+observeEvent(input$refresh_data, {
+  tryCatch({
+    refresh_data()
+    showNotification("Data refreshed successfully!", type = "message")
+  }, error = function(e) {
+    showNotification(paste("Refresh failed:", e$message), type = "error")
+  })
+})
+```
 
 Water Chemistry
 ==========================================
@@ -453,12 +460,11 @@ Row
 ### Download Water Data {figure-height=100}
 
 ```{r, download water, fig.height=0.5}
-# Remove X column if it exists from API response
-for_download <- left_join(
-  water %>% select(-any_of("X")), 
-  water_param %>% select(-any_of("X")), 
-  by = 'parameter'
-)
+# Conditionally remove X column if it exists
+water_clean <- if("X" %in% names(water)) select(water, -X) else water
+water_param_clean <- if("X" %in% names(water_param)) select(water_param, -X) else water_param
+for_download <- left_join(water_clean, water_param_clean, by = 'parameter')
+
 downloadButton('download_data', 'Download Water Data')
 
 selectInput('water_download',  'Water Download', 
@@ -637,12 +643,12 @@ Row
 ### Download Soil Data
 
 ```{r, download soil}
-for_download_soil <- left_join(
-  soil %>% select(-any_of("X")), 
-  soil_param %>% select(-any_of("X")), 
-  by = 'parameter'
-)
-downloadButton('download_data', 'Download Soil Data')
+# Conditionally remove X column if it exists
+soil_clean <- if("X" %in% names(soil)) select(soil, -X) else soil
+soil_param_clean <- if("X" %in% names(soil_param)) select(soil_param, -X) else soil_param
+for_download_soil <- left_join(soil_clean, soil_param_clean, by = 'parameter')
+
+downloadButton('download_data', 'Download Water Data')
 
 selectInput('soil_download',  'Soil Download', 
             choices = list('General and Nutrients' = 'gennuts', 'Element Scan' = 'ipms'), 
@@ -999,3 +1005,4 @@ downloadHandler(
 )
 
 ```
+
