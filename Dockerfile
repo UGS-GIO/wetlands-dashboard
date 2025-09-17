@@ -32,20 +32,21 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/ \
  && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
-# Install all required R packages
+# Install all required R packages (including API packages)
 RUN R -e "options(repos = 'https://cloud.r-project.org/'); \
     install.packages(c('shiny', 'flexdashboard', 'rmarkdown', 'fontawesome', \
                       'leaflet', 'tidyr', 'dplyr', 'ggplot2', 'sf', \
-                      'kableExtra', 'scales', 'DT'), \
+                      'kableExtra', 'scales', 'DT', 'httr', 'jsonlite'), \
                     dependencies = TRUE); \
-    if (!all(c('leaflet', 'shiny', 'flexdashboard', 'sf', 'DT') %in% rownames(installed.packages()))) { \
+    if (!all(c('leaflet', 'shiny', 'flexdashboard', 'sf', 'DT', 'httr', 'jsonlite') %in% rownames(installed.packages()))) { \
         stop('Some packages failed to install'); \
     } else { \
         cat('All packages installed successfully!\n'); \
     }"
 
-# Verify critical packages can be loaded
+# Verify critical packages can be loaded (including API packages)
 RUN R -e "library(leaflet); library(shiny); library(flexdashboard); library(sf); library(DT); \
+          library(httr); library(jsonlite); \
           cat('All critical libraries loaded successfully!\n')"
 
 # List installed packages for debugging
