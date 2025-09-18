@@ -1,10 +1,7 @@
 # Get shiny server plus tidyverse packages image
 FROM --platform=linux/amd64 rocker/shiny-verse:latest
 
-# Use binary packages from RStudio Package Manager for faster installs
-RUN echo "options(repos = c(CRAN = 'https://packagemanager.rstudio.com/cran/__linux__/jammy/latest'))" >> /usr/local/lib/R/etc/Rprofile.site
-
-# System libraries of general use (install in one layer)
+# System libraries of general use
 RUN apt-get update && apt-get install -y \
  curl \
  sudo \
@@ -27,45 +24,54 @@ RUN apt-get update && apt-get install -y \
  libgeos-dev \
  libproj-dev \
  libmagick++-dev \
+ ## Add cmake for s2 package compilation
  cmake \
+ ## Or alternatively, install abseil directly (uncomment one of these):
+ # libabsl-dev \
  && apt-get clean \
- && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /var/lib/apt/lists/ \
  && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
-# Install R packages in separate layers for better caching
-# Core packages (rarely change)
-RUN R -e "install.packages(c('shiny', 'flexdashboard', 'rmarkdown'), dependencies = TRUE)"
+# Install all required R packages (including API packages)
+RUN R -e "options(repos = 'https://cloud.r-project.org/'); \
+    install.packages(c('shiny', 'flexdashboard', 'rmarkdown', 'fontawesome', \
+                      'leaflet', 'tidyr', 'dplyr', 'ggplot2', 'sf', \
+                      'kableExtra', 'scales', 'DT', 'httr', 'jsonlite'), \
+                    dependencies = TRUE); \
+    if (!all(c('leaflet', 'shiny', 'flexdashboard', 'sf', 'DT', 'httr', 'jsonlite') %in% rownames(installed.packages()))) { \
+        stop('Some packages failed to install'); \
+    } else { \
+        cat('All packages installed successfully!\n'); \
+    }"
 
-# Visualization packages 
-RUN R -e "install.packages(c('ggplot2', 'scales', 'fontawesome'), dependencies = TRUE)"
+# Verify critical packages can be loaded (including API packages)
+RUN R -e "library(leaflet); library(shiny); library(flexdashboard); library(sf); library(DT); \
+          library(httr); library(jsonlite); \
+          cat('All critical libraries loaded successfully!\n')"
 
-# Data manipulation packages
-RUN R -e "install.packages(c('tidyr', 'dplyr', 'kableExtra', 'DT'), dependencies = TRUE)"
-
-# API and network packages
-RUN R -e "install.packages(c('httr', 'jsonlite'), dependencies = TRUE)"
-
-# Geospatial packages (slowest, so install last)
-RUN R -e "install.packages(c('leaflet', 'sf'), dependencies = TRUE)"
-
-# Verify only critical packages (reduce verification time)
-RUN R -e "library(shiny); library(flexdashboard); library(leaflet); library(sf); cat('Critical packages loaded successfully!\n')"
+# List installed packages for debugging
+RUN R -e "cat('Installed packages:\n'); print(rownames(installed.packages()))"
 
 # Clean up
 RUN rm -rf /tmp/downloaded_packages/ /tmp/*.rds
 
-# Copy configuration files
+# Copy configuration files into the Docker image
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
-COPY shiny-server.sh /usr/bin/shiny-server.sh
-RUN chmod +x /usr/bin/shiny-server.sh
 
-# Copy app files (do this last so code changes don't invalidate package layers)
+# Copy shiny app and all data files into the Docker image
 COPY app /srv/shiny-server/
+
+# Remove default index.html if it exists
 RUN rm -f /srv/shiny-server/index.html
 
-# Set environment and expose port
-ENV PORT=8080
+# Make the ShinyApp available at port 8080
 EXPOSE 8080
+
+# Copy shiny app execution file into the Docker image
+COPY shiny-server.sh /usr/bin/shiny-server.sh
+
+# Make sure the shell script is executable
+RUN chmod +x /usr/bin/shiny-server.sh
 
 USER shiny
 CMD ["/usr/bin/shiny-server.sh"]
