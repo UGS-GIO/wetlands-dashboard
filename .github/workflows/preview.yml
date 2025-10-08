@@ -1,0 +1,154 @@
+name: Deploy to Shared Preview
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, closed]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GAR_LOCATION: us-central1
+  REPOSITORY: shiny-repo
+  PREVIEW_SERVICE: wetland-dashboard-pr-2   # Single shared preview service
+  REGION: us-central1
+
+jobs:
+  deploy-to-preview:
+    if: github.event.action != 'closed'
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Google Auth
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
+          service_account: '${{ secrets.WIF_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+
+      - name: Docker Auth
+        uses: 'docker/login-action@v3'
+        with:
+          registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+
+      - name: Build and Push Container
+        run: |-
+          IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.PREVIEW_SERVICE }}:${{ github.sha }}"
+          docker build -t "${IMAGE_TAG}" ./
+          docker push "${IMAGE_TAG}"
+
+      - name: Deploy to Shared Preview
+        run: |-
+          gcloud run deploy ${{ env.PREVIEW_SERVICE }} \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.PREVIEW_SERVICE }}:${{ github.sha }} \
+            --region=${{ env.REGION }} \
+            --port=8080 \
+            --memory=2Gi \
+            --cpu=1 \
+            --timeout=3600 \
+            --max-instances=3 \
+            --update-labels=preview=true,current-pr=${{ github.event.number }},current-branch=${BRANCH_LABEL}
+
+      - name: Get Preview URL
+        id: get-url
+        run: |
+          PREVIEW_URL=$(gcloud run services describe ${{ env.PREVIEW_SERVICE }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "PREVIEW_URL=${PREVIEW_URL}" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('🔍 Shared Preview')
+            );
+
+            const previewUrl = '${{ steps.get-url.outputs.PREVIEW_URL }}';
+            const commentBody = `## 🔍 Shared Preview Environment
+
+            Your changes have been deployed to the shared preview environment!
+
+            **🌐 Preview URL:** ${previewUrl}
+
+            **📊 Current Deployment:**
+            - PR: #${{ github.event.number }}
+            - Branch: \`${{ github.head_ref }}\`
+            - Commit: \`${{ github.sha }}\`
+
+            **⚠️ Note:** This is a shared preview environment. New PRs will replace this deployment.
+
+            ---
+            <sub>🤖 Shared preview environment managed by CI/CD</sub>`;
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+      - name: Update other open PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get all open PRs
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+
+            // Update comments on other PRs to indicate they're no longer in preview
+            for (const pr of prs) {
+              if (pr.number !== context.issue.number) {
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                });
+
+                const botComment = comments.find(comment => 
+                  comment.user.type === 'Bot' && comment.body.includes('🔍 Shared Preview')
+                );
+
+                if (botComment) {
+                  const updatedBody = botComment.body.replace(
+                    /## 🔍 Shared Preview Environment/,
+                    '## 🔍 ~~Shared Preview Environment~~ (Replaced)'
+                  );
+                  
+                  await github.rest.issues.updateComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: botComment.id,
+                    body: updatedBody + '\n\n**⚠️ This preview has been replaced by PR #${{ github.event.number }}**'
+                  });
+                }
+              }
+            }
+
+  # No cleanup job needed since we're reusing the same service
