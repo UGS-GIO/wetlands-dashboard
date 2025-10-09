@@ -927,7 +927,7 @@ Wetland Macroinvertebrates
 =======================================
 <h1> **Macroinvertebrates** </h1>
 <!--Banner image -->
-<img src="damselfly_moab.jpg" class="banner-image">
+<img src="damselfly_moab.JPG" class="banner-image">
 
 Row
 ---------------------------------------
