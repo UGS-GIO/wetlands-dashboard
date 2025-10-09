@@ -42,9 +42,16 @@ jobs:
 
       - name: Build and Push Container
         run: |-
+          echo "🚀 Building preview image (should take ~2-3 minutes)..."
+          START_TIME=$(date +%s)
+          
           IMAGE_TAG="${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.PREVIEW_SERVICE }}:${{ github.sha }}"
           docker build -t "${IMAGE_TAG}" ./
           docker push "${IMAGE_TAG}"
+          
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "⏱️ Build completed in ${DURATION} seconds"
 
       - name: Deploy to Shared Preview
         run: |-

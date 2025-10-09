@@ -1,0 +1,38 @@
+steps:
+  # Build the base container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-f'
+      - 'Dockerfile.base'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_BASE_IMAGE_NAME}:latest'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_BASE_IMAGE_NAME}:${BUILD_ID}'
+      - '.'
+  
+  # Push the base container image to Artifact Registry (latest tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_BASE_IMAGE_NAME}:latest'
+  
+  # Push the base container image to Artifact Registry (build ID tag)
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_BASE_IMAGE_NAME}:${BUILD_ID}'
+
+# Substitutions (you can override these with --substitutions flag)
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: shiny-repo
+  _BASE_IMAGE_NAME: wetland-dashboard-base
+
+# Build timeout - increased for base image (35 minutes)
+timeout: 2100s
+
+# Use a more powerful machine for faster builds
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
