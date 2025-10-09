@@ -3,6 +3,9 @@ name: Deploy to Production
 on:
   push:
     branches: [ main, master ]
+    paths-ignore:
+      - 'Dockerfile.base'
+      - '.github/workflows/build-base.yml'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -41,8 +44,15 @@ jobs:
 
       - name: Build and Push Container
         run: |-
+          echo "🚀 Building app image (should take ~2-3 minutes)..."
+          START_TIME=$(date +%s)
+          
           docker build -t "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}" ./
           docker push "${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}"
+          
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+          echo "⏱️ Build completed in ${DURATION} seconds"
 
       - name: Deploy to Cloud Run
         id: deploy

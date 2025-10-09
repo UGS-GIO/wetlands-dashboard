@@ -1,62 +1,8 @@
-# Get shiny server plus tidyverse packages image
-FROM --platform=linux/amd64 rocker/shiny-verse:latest
+# Main Dockerfile - Uses pre-built base image with all dependencies
+FROM us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboard-base:latest
 
-# System libraries of general use
-RUN apt-get update && apt-get install -y \
- curl \
- sudo \
- pandoc \
- libcurl4-gnutls-dev \
- libcairo2-dev \
- libxt-dev \
- libssl-dev \
- libssh2-1-dev \
- libxml2-dev \
- libfontconfig1-dev \
- libharfbuzz-dev \
- libfribidi-dev \
- libfreetype6-dev \
- libpng-dev \
- libtiff5-dev \
- libjpeg-dev \
- libudunits2-dev \
- libgdal-dev \
- libgeos-dev \
- libproj-dev \
- libmagick++-dev \
- ## Add cmake for s2 package compilation
- cmake \
- ## Or alternatively, install abseil directly (uncomment one of these):
- # libabsl-dev \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/ \
- && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
-
-# Install all required R packages (including API packages)
-RUN R -e "options(repos = 'https://cloud.r-project.org/'); \
-    install.packages(c('shiny', 'flexdashboard', 'rmarkdown', 'fontawesome', \
-                      'leaflet', 'tidyr', 'dplyr', 'ggplot2', 'sf', \
-                      'kableExtra', 'scales', 'DT', 'httr', 'jsonlite'), \
-                    dependencies = TRUE); \
-    if (!all(c('leaflet', 'shiny', 'flexdashboard', 'sf', 'DT', 'httr', 'jsonlite') %in% rownames(installed.packages()))) { \
-        stop('Some packages failed to install'); \
-    } else { \
-        cat('All packages installed successfully!\n'); \
-    }"
-
-# Verify critical packages can be loaded (including API packages)
-RUN R -e "library(leaflet); library(shiny); library(flexdashboard); library(sf); library(DT); \
-          library(httr); library(jsonlite); \
-          cat('All critical libraries loaded successfully!\n')"
-
-# List installed packages for debugging
-RUN R -e "cat('Installed packages:\n'); print(rownames(installed.packages()))"
-
-# Clean up
-RUN rm -rf /tmp/downloaded_packages/ /tmp/*.rds
-
-# Copy configuration files into the Docker image
-COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
+# Switch to root to copy files
+USER root
 
 # Copy shiny app and all data files into the Docker image
 COPY app /srv/shiny-server/
@@ -64,14 +10,8 @@ COPY app /srv/shiny-server/
 # Remove default index.html if it exists
 RUN rm -f /srv/shiny-server/index.html
 
-# Make the ShinyApp available at port 8080
-EXPOSE 8080
-
-# Copy shiny app execution file into the Docker image
-COPY shiny-server.sh /usr/bin/shiny-server.sh
-
-# Make sure the shell script is executable
-RUN chmod +x /usr/bin/shiny-server.sh
-
+# Switch back to shiny user
 USER shiny
+
+# The CMD is inherited from the base image
 CMD ["/usr/bin/shiny-server.sh"]
