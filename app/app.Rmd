@@ -1,14 +1,15 @@
 ---
-title: "Wetland Data Dashboard"
-output: 
+title: "Utah Wetland Data Explorer"
+output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: scroll
-    social: menu
-    source_code: hidden
+    css: style.css
+    logo: UGS-logo-large.png
 runtime: shiny
 ---
-```{r setup, include = FALSE, echo=FALSE, message=FALSE, warning=FALSE}
+
+```{r setup}
 library(shiny)
 library(flexdashboard)
 library(fontawesome)
@@ -135,7 +136,7 @@ refresh_data <- function() {
   cat("Data refreshed!\n")
 }
 
-# Commented out CSV loading (keep as backup reference)
+# Commented out original CSV loading for reference
 # site_attr <- read.csv('site_attr.csv')
 # flags <- read.csv('flags.csv')
 # inverts <- read.csv('inverts.csv')
@@ -144,125 +145,165 @@ refresh_data <- function() {
 # soil_param <- read.csv('soil_param.csv')
 # water <- read.csv('water.csv')
 # water_param <- read.csv('water_param.csv')
-
-#veg <- read.csv('veg.csv')
-#veg_param <- read.csv('veg_param.csv')
-
-#disturb <- read.csv('disturb.csv')
-#disturb_param <- read.csv('disturb_param.csv')
-
-#structure <- read.csv('structure.csv')
-#structure_param <- read.csv('structure_param.csv')
 ```
 
-```{r setup for pgadmin, eval=FALSE, include=FALSE}
-#packages
-library(DBI)
-
-#database connection
-con <- dbConnect(RPostgres::Postgres(), 
-                    dbname = 'wet_dash', 
-                    port = 5432, 
-                    user = 'postgres', 
-                 password = 'postgres') 
-
-site_attr <- dbGetQuery(con, 'SELECT * FROM site_attr')
-flags <- dbGetQuery(con,  'SELECT * FROM flags')
-
-inverts <- dbGetQuery(con, "SELECT * FROM inverts") 
-invert_param <- dbGetQuery(con, 'SELECT * FROM invert_param')
-
-soil <- dbGetQuery(con, "SELECT * FROM soil")
-soil_param <- dbGetQuery(con, "SELECT * FROM soil_param")
-
-water <- dbGetQuery(con, 'SELECT * FROM water')
-water_param <- dbGetQuery(con, 'SELECT * FROM water_param')
-
-veg <- dbGetQuery(con, "SELECT * FROM veg")
-veg_param <- dbGetQuery(con, 'SELECT * FROM veg_param')
-
-disturb <- dbGetQuery(con, 'SELECT * FROM disturb')
-disturb_param <- dbGetQuery(con, 'SELECT * FROM disturb_param')
-
-structure <- dbGetQuery(con, 'SELECT * FROM structure')
-structure_param <- dbGetQuery(con, 'SELECT * FROM structure_param')
-dbDisconnect(con)
-```
-
-```{r, subpop munge}
-huc_map <- list(
-  `Upper Bear` = c(16010101, 16010101),
-  `Lower Bear` = c(16010201, 16010202, 16010203, 16010204), 
-  Weber = c(16020102,16020101),
-  Jordan = c(16020201, 16020202, 16020203, 16020204),
-  `Great Salt Lake` = c(16020301, 16020302, 16020303, 16020304, 16020305, 16020306, 
-                        16020307, 16020308, 16020309, 16020310), 
-  `Sevier Lake` = c(16030001, 16030002, 16030003, 16030004, 16030005, 16030006, 
-                    16030007, 16030008, 16030009), 
-   `Lower Green` = c(14060001, 14060002, 14060003, 14060004, 14060005, 14060006, 
-                     14060007, 14060008, 14060009)
+```{r relabelling code}
+huc6_map <- list(
+  `Upper Colorado-Dolores` = '140300', 
+  `Upper Green` = '140401', 
+  `White-Yampa` = '140500',                                    
+  `Lower Green` = '140600',   
+  `Upper Colorado-Dirty Devil` = '140700', 
+  `Lower San Juan` = '140802',  
+  `Lower Colorado-Lake Mead` = '150100', 
+  `Upper Bear` = '160101',  
+  `Lower Bear` = '160102',  
+  `Weber` = '160201',  
+  `Jordan` = '160202', 
+  `Great Salt Lake` = '160203', 
+  `Escalante Desert-Sevier Lake` = '160300', 
+  `Upper Snake` = '170402' 
 )
-reverse_huc <- unlist(lapply(names(huc_map), function(k) setNames(rep(k, length(huc_map[[k]])), huc_map[[k]])))
-site_attr <- site_attr %>% mutate(huc8 = recode(huc8, !!!reverse_huc))
 
-wet_map <- list(
-  `Aquatic Bed` = c("L1AB", "L2AB", "PAB", "R2AB"), 
-  `Marsh` = c('L2EM', "PEM"), 
-  `Woody` = c("PSS", "PFO"), 
-  `Playa/Mudflat` = c('L1UB', "L2UB", "L2US", "PUB", "PUS", 
-                      "R2UB", 'R3UB', 'R4UB', "R5UB", 
-                      'R2US', 'R3US', 'R4US', 'R5UB')
-)
-reverse_wet <- unlist(lapply(names(wet_map), function(k) setNames(rep(k, length(wet_map[[k]])), wet_map[[k]])))
-site_attr <- site_attr %>% mutate(sysclass = recode(sysclass, !!!reverse_wet))
+classify_huc <- function(huc_codes) {
+  huc6 <- substr(as.character(huc_codes), 1, 6)
+  
+  lookup <- unlist(huc6_map)
+  names(lookup) <- names(huc6_map)
+  huc6_to_label <- setNames(names(lookup), lookup)
+  
+  sapply(huc6, function(code) {
+    if (code %in% names(huc6_to_label)) {
+      huc6_to_label[[code]]
+    } else {
+      "Other"
+    }
+  })
+}
+
+site_attr$Watershed <- classify_huc(site_attr$huc8)
+
+classify_wetland <- function(codes) {
+  sapply(codes, function(code) {
+    if (grepl("AB", code)) {
+      "Aquatic Bed"
+    } else if (grepl("EM", code)) {
+      "Marsh"
+    } else if (grepl("SS", code) || grepl("FO", code)) {
+      "Woody"
+    } else if (grepl("UB", code) || grepl("US", code)) {
+      "Playa/Mudflat"
+    } else {
+      "Other"
+    }
+  })
+}
+site_attr$`Wetland Type` <- classify_wetland(site_attr$sysclass)
 ```
 
 Background
 ======================================
+
+Row 
+---------------------------------------
+###
+<h2> **Welcome to the Utah Wetland Data Explorer!** </h2>
+
+Explore water quality, soil chemistry, and macroinvertebrate communities in Utah's wetlands!
+
+Utah is home to [1.5 million acres of wetlands](https://wetlands.geology.utah.gov/). Wetlands have three parts: 1) water at or near the soil surface for some part of the year, 2) hydric soils with low oxygen created by flooding, and 3) hydrophytic plants that have adaptations to flooding and hydric soils. Wetlands are rare in Utah, only three percent of the state, but they provide functions that are crucial to healthy watersheds. Wetland functions include:
+
+ - Improving water quality,
+ - Buffering communities from drought and flood,
+ - Providing habitat for 80% of Utah's fish and wildlife species, and
+ - Providing recreation opportunities for paddling, wildlife watching, hunting, and fishing.
+ 
+Wetland hydrology is dynamic, often switching between deep and shallow flooding or no flooding at all. Dynamic hydrology leads to chemical and biological conditions that set wetlands apart from other aquatic ecosystems like lakes and streams. Decades of research, management, and monitoring in Utah wetlands have produced a trove of chemical, physical, and biological data, but that data is often in disparate reports written by multiple sources.This web application provides data compiled from numerous sources and presents information to the public all in one place.
+
+### 
+
+```{r out.width='100%'}
+knitr::include_graphics("bda_strawberry.jpg")
+```
+```{r eval=FALSE}
+#this code works nicely with the css, but it won't scale
+<figure>
+  <img src="Bolboschoenus maritimus_BRI05_071912_IMGP3756_Long.jpg" style="width: 100%; height: auto; border: 1px solid #ccc;">
+  <figcaption style='text-align: center; margin-top: 5px;'>
+    <em>Bolboschoenus maritimus</em> (alkali bulrush) in a marsh in Box Elder County
+  </figcaption>
+</figure>
+```
+
 Row
 --------------------------------------
 
 ### Water Chemistry Records
 ```{r background info}
 water_sample <- format(length(water$site_param), big.mark = ',')
-valueBox(water_sample, icon = 'fa-tint', color = 'aqua')
+valueBox(water_sample, icon = 'fa-tint')
 ```
 
 ### Soil Records
 ```{r}
 soil_sample <- format(length(soil$site_param), big.mark = ',')
-valueBox(soil_sample, icon = 'fa-map-pin', color = 'green')
+valueBox(soil_sample, icon = 'fa-earth-americas')
 ```
 
 ### Macroinvertebrate Samples
 ```{r}
 invert_sample <- format(length(unique(inverts$siteid)), big.mark = ',')
-valueBox(invert_sample, icon = 'fa-bug', color = 'purple')
+valueBox(invert_sample, icon = 'fa-bug')
 ```
 
-Row
----------------------------------------
-### Data Explanation
-
-An explanation of the projects the data was gathered for. Perhaps Links to documents. Contact Information.
-
-```{r explain text}
-
-```
-
-Row
----------------------------------------
-### Example Photo
-```{r example photo, fig.cap = 'Emergent marsh near Great Salt Lake'}
-knitr::include_graphics('Bolboschoenus maritimus_BRI05_071912_IMGP3756_Long.jpg')
-```
-
-Row
+Row 
 ------------------------------------------
-### Definitions
-A **Watershed** (here HUC6/ Accounting Units) has a definition and you can look at their boundaries [here](https://www.arcgis.com/home/item.html?id=5bbefdcd2511472ea9abd0afedb85c7e)
-We have many ways of categorizing wetlands into different types based on how long they are flooded, their position in the landscape, or their dominant plant community. We will use [Cowardin](https://www.fws.gov/media/national-wetland-inventory-wetlands-and-deepwater-map-code-diagram) Systems (palustrine, lacustrine, etc) and Classes (substrate/vegetation type). 
-Level III **ecoregions** divided up large areas based on having similar climate and habitats. They were developed by the [EPA](https://www.epa.gov/eco-research/ecoregions) to explain some things. 
+### 
+
+```{r out.width='100%', out.height='80vh'}
+knitr::include_graphics("uwam_crew.jpg")
+```
+
+```{r, eval=FALSE}
+#knitr::include_graphics("uwam_crew.jpg")
+
+works:
+  <div style="text-align:center; margin-bottom:20px;">
+  <img src="uwam_crew.jpg" style="width:100%; max-width:600px; height:auto; border:2px solid #ccc; border-radius:6px;">
+  <div style="background-color:#2a2a2a; color:#fff; font-size:14px; text-align:center; padding:6px 10px; border-radius:0 0 6px 6px; max-width:600px; margin:auto;">
+    UGS ecologists monitoring a wetland in Beaver County
+  </div>
+</div>
+
+{r out.height = "100%", fig.cap = 'UGS ecologists monitoring a wetland in Beaver County'}
+```
+
+
+```{r old fig code, eval=FALSE}
+
+  
+  <div class = "image-container">
+  <img src = "uwam_crew.jpg" alt = "two scientists">
+  <div class = "image-caption"> UGS ecologists monitoring a wetland in Beaver County </div>
+</div>
+  
+  <figure>
+  <img src="uwam_crew.jpg" style="width: 100%; height: auto; border: 1px solid #ccc;">
+  <figcaption style='text-align: center; margin-top: 5px;'>
+    UGS ecologists monitoring a wetland in Beaver County
+  </figcaption>
+</figure>
+```
+
+###
+<h3> **Data Sources** </h3>
+
+The bulk of data included here is from samples gathered as part of wetland condition monitoring surveys conducted by the Utah Geological Survey (UGS) and Utah Division of Water Quality. The most common way to measure wetland condition is to assess what types of plants are growing and how much area they cover. Water, soil, and macroinvertebrates provide important clues into factors that drive wetland condition and those samples were gathered alongside plant community monitoring. The existing data is heavily focused around Great Salt Lake, but the UGS hopes to collate more data to paint a full picture of wetland chemistry and biology across Utah. To learn more about data included in this dashboard, check out the resources below:  
+
+ - [The UGS Wetlands Program website](https://geology.utah.gov/water/wetlands/)
+ - [The Wetlands collection in the Utah GeoData Archive](https://geodata.geology.utah.gov/pages/collections_featured.php?parent=665)
+ - [The Utah Wetland Plant Application](https://wetlandplants.geology.utah.gov/)
+ - [The Utah Wetland Mapper](https://wetlands.geology.utah.gov/)
 
 ### Data Source Status
 ```{r data source status}
@@ -290,36 +331,93 @@ observeEvent(input$refresh_data, {
   })
 })
 ```
+ 
+Row
+------------------------------------------
+###
+<h3> **Ways to Explore the Data** </h3>
+
+The tabs at the top of this page will guide you through visualizations and summaries of water chemistry, soil chemistry, and macroinvertebrate communities found in Utah's wetlands. Data from multiple sources are presented in one place and put into a context to help visualize  how the data could be  used in wetland management, restoration, and research.
+
+- **Maps**: Viewing data spatially can show potential regional differences in wetlands or hotspots where a particular parameter is notably different. Maps can highlight gradients of increasing concentration or diversity. A spatial view also allows users to focus on a region, management area, or particular wetland of interest. 
+- **Histograms**: These charts show the range of values possible for a measurement as well as what values are most or least common. In histograms, the longest bars show the most common value observed in the data. When a value is less common, the bar will be shorter. 
+- **Boxplots**: These plots are a way to compare data across multiple groups. The top and bottom sides of each box mark the 25th and 75th percentiles of observations in that group, whereas the middle bar is the median or middle value. The whiskers on each plot show the maximum and minimum values, and any points above or below those whiskers are considered outliers.
+- **Summary statistics**: These values show the details of how a parameter is different between wetland populations of interest for a more exact comparison.  
+- **Populations**: The dropdowns at the top of each page allow you to divide data in the plots and tables into different groups. 
+  - **Watersheds**: The climate, topography, hydrology, and geology of a watershed determine where wetlands are located and what type of wetlands exist there. The United States is divided into [Hydrologic Unit Codes (HUC's)](https://www.arcgis.com/home/item.html?id=5bbefdcd2511472ea9abd0afedb85c7e), with longer codes (2-12 digits) showing higher resolution of shared water sources. We are showing data in 6-digit Basin codes. 
+  - **Ecoregions**: The U.S. is also divided into [ecoregions](https://www.epa.gov/eco-research/ecoregions), which are areas that support similar ecosystems because they have the same landforms, climate, biological communities, and land uses. Utah is very ecologically diverse and supports seven Level III ecoregions, from the arid Colorado Plateau to the high elevation Wasatch and Uinta Mountains.
+  - **Wetland Type**: Wetlands can be grouped in several ways, here we are lumping them together by their dominant vegetation type, following the classes developed by [Cowardin](https://www.fws.gov/media/national-wetland-inventory-wetlands-and-deepwater-map-code-diagram) for the U.S. Fish and Wildlife Service. 
+- **On Your Own**: A 'Download' button is at the bottom of each tab, where you can download a subset of parameters or all the data. 
+
+Row
+------------------------------------------
+### 
+<h2> **Submit Your Data to the Explorer** </h2>
+Please consider submitting your data to the UGS for inclusion in the Wetland Data Explorer. Use the [spreadsheet template provided here](UWDE_submission_template.xlsx) to format your data and submit it to Becka Downard at [beckad@utah.gov](beckad@utah.gov). 
 
 Water Chemistry
 ==========================================
-Water chemistry falls into three categories of interest: pollution indicators, nutrients, and toxics. 
-select Input for category
-select Input for parameter
-Text explaining the significance of a value and the wqs associated with that indicator for 3D Aquatic Life Uses
 
-Row {data-height=100}
+<h1> **Water Chemistry** </h1>
+<!--Banner image -->
+<img src="wetland_water.jpg" class="banner-image">
+
+Row
 -------------------------------------------
+###
+Wetlands are often called landscape sinks—places low in the landscape where water and the contaminants in the water accumulate. Within a wetland, rising and falling water levels, rapid plant growth, and unique soil microbes concentrate, dilute, transform, or sequester chemicals in the water. In fact, water quality can improve as water flows through wetlands. Water chemistry is a crucial indicator of wetland condition because the plants, fish, and macroinvertebrates in the water are adapted to a specific range of chemistry, and deviations outside of those ranges can be clear markers of human impacts on an ecosystem. We have included water quality criteria for waters that support waterfowl and shorebirds, [Class 3D in Utah](https://adminrules.utah.gov/public/rule/R317-2/Current%20Rules?), where possible, as context. However, Utah Administrative Rules contain a number of caveats and exclusions for applying water quality standards in wetlands.
+ 
+Of the dozens of water chemistry parameters that can be measured, we present the parameters most indicative of wetland condition: general chemistry, nutrients, and metals/metalloids. Parameters not included in the plots below can be downloaded. 
 
-```{r, water dropdowns}
+```{r water chem munge}
+#goal: combine total and filtered parameters
+water$fraction <- rep(NA)
+water_fraction <- function(fraction){
+  sapply(fraction, function(fraction) {
+    if(grepl("_t", fraction)) {
+      "total"
+    } else if(grepl("_d", fraction)) {
+      "filtered"
+    }
+      else {
+        NA
+      }
+    })
+  }
+water$fraction <- water_fraction(water$parameter)
+
+```
+
+Row {data-height=200}
+-------------------------------------------
+###
+<div class="dropdown-container">
+  <div class="dropdown-item">
+  
+```{r water category}
 selectInput('water_category',  'Water Quality Category', 
-            choices = list('Pollution Indicators' = 'polind', 'Nutrients' = 'nuts','Toxics' = 'toxs'), 
+            choices = list('General Chemistry' = 'polind', 'Nutrients' = 'nuts','Metal(oids)' = 'toxs'), 
             selected = 'polind')
 
 params_water_measure <- list(
-  'polind' = c('do_conc', 'do_sat', 'ec25', 'temp', 'ph'), 
+  'polind' = c('do_sat', 'ec25', 'temp', 'ph'), 
   'nuts' = c('cbod', 'nh4_t', 'no3_t', 'po4_t', 'nh4_d', 'no3_d', 'po4_d'), 
   'toxs' = c('hg_t', 'al_t', 'as_t', 'ba_t', 'be_t', 'cd_t', 'cr_t', 'cu_t', 'mn_t', 'ni_t', 'pb_t', 
              'se_t', 'zn_t')
 )
 
 uiOutput('h2o_param')
+```
 
+</div>
+<div class="dropdown-item">
+
+```{r water param}
 renderUI({
   req(input$water_category)
   
   choices <- switch(input$water_category, 
-                    'polind' = c('Dissolved oxygen (mg/L)' = 'do_conc', 'Dissolved oxgyen (%)' = 'do_sat', 
+                    'polind' = c('Dissolved oxgyen (%)' = 'do_sat', 
                          'Conductivity (us/m)' = 'ec25', 'Temperature (C)' = 'temp', 'pH' = 'ph'), 
                     'nuts' = c('Biological Oxygen Demand' = 'cbod', 'Ammonium (total)' = 'nh4_t', 
                        'Nitrate (total)' = 'no3_t', 'Phosphate (total)' = 'po4_t', 
@@ -337,19 +435,69 @@ renderUI({
 })
 ```
 
+</div>
+<div class="dropdown-item">
+
 ```{r}
-selectInput('subpop', 'Subpopulation', 
-            choices = list('Watershed' = 'huc8', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'sysclass'), 
-            selected = 'huc8')
+selectInput('subpop', 'Grouping', 
+            choices = list('Watershed' = 'Watershed', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'Wetland Type'), 
+            selected = 'Watershed')
 ```
 
-Row
---------------------------------------------
-### Map of parameter of interest 
+</div>
+</div>
 
+Row {data-height=400}
+-------------------------------------------
+###
+
+```{r}
+htmlOutput('category_description')
+```
+
+```{r, category text}
+output$category_description <- 
+  renderUI({
+    switch(input$water_category, 
+           polind = HTML("
+             <p>General Chemistry parameters describe the basic chemistry of a wetland. Changes in these parameters can indicate changes in water quality. Aquatic organisms are adapted to life within specific ranges of conductivity, pH, and temperature.
+ </p>
+             <ul>
+             <li><strong>pH</strong> measures the acidity (pH < 7) or alkalinity (pH > 7) of water. Some pollutants will drive steep changes in pH.</li>
+             <li><strong>Conductivity</strong> is a measure of how salty water is. Water with more salts will have higher measures of conductivity. Utah wetlands vary significantly in conductivity, from freshwater alpine ponds to hypersaline Great Salt Lake playas. </li>
+             <li><strong>Dissolved oxygen</strong> is the amount of oxygen available for aquatic animals to breathe. Decomposition of plants and algae associated with excessive nutrient concentration lowers dissolved oxygen in water.</li>
+             <li><strong>Temperature</strong> determines which organisms can survive in wetlands because temperature regulates metabolic processes. Temperature also influences water chemistry, especially how much dissolved gases water can hold.</li>
+             </ul>
+             "), 
+           nuts = HTML("
+           <p>Nutrients are the compounds plants need to grow and are cycled through the environment between water, soils, plants, and animals. Wetlands are nutrient cycling hotspots because of the chemical reactions that happen where oxygenated water and soils meet anoxic zones. Though they are necessary for life, too much nitrogen, phosphorus, or carbon, including the elements in excess fertilizer runoff, can throw off the balance of an ecosystem, favoring rapidly growing plants and animals.</p>
+           <ul>
+           <li><strong>Nitrogen</strong> is necessary for making proteins and conducting photosynthesis, and is the element that most often limits plant growth and productivity. Fertilizers boost nitrogen in soils, but excess fertilizer runs off into waterways and can become pollution. Two forms of nitrogen are measured in wetlands: nitrate, which is more common in well-oxygenated water, and ammonia, which is more common in anoxic waters.</li>
+           <li><strong>Phosphorus</strong> is required for metabolism and reproduction in plants, and it is a common component of fertilizers as well as human waste. Just like nitrogen, excess phosphorus negatively impacts ecosystem health. Phosphate (PO<sub>4</sub>) is the most commonly measured form of phosphorus.</li>
+           <li><strong>Carbon</strong> is the basis for all organic material and is found in innumerable chemical forms. We measure organic material in wetlands as dissolved/total organic carbon as well as biological oxygen demand. The first is a measure of how much organic matter is in the water, and the second is a measure of how much microbial energy is needed to decompose that matter.</li>
+          <ul>
+          <li><em>*Nutrients are measured both as total concentration and dissolved or filtered fractions. We include both together in the plots below, designated by different markers.<em></li>
+          </ul>
+          </li>
+           </ul>
+           "), 
+           toxs = HTML("Metals and Metalloids are elements that are naturally found in the Earth's crust and waterways. Human activities like irrigation, manufacturing, and driving vehicles concentrate those elements in waterways. Some metals and metalloids are toxic to wildlife and humans, leading to death and deformities. Others accumulate in animal fats and cause birth defects or death at higher trophic levels. Many elements are critical micronutrients for plants and animals, and only become impactful at high concentrations.</p>
+           <ul>
+           <li><strong>Arsenic</strong>, <strong>cadmium</strong>, <strong>chromium</strong>, <strong>lead</strong>, and <strong>mercury</strong>  are toxic even at very low concentrations. These elements are highest in waters influenced by industrial discharges and mining. Mercury is of special concern because it bioaccumulates in the food chain.</li>
+           <li><strong>Copper</strong>, <strong>nickel</strong>, <strong>selenium</strong>, and <strong>zinc</strong> are used in small amounts by plants and animals. However, high concentrations from improper fertilizer use, industrial pollution, or mining can cause toxicity.</li>
+           <li><strong>Aluminum</strong>, <strong>barium</strong>, and <strong>iron</strong>  are all very common in the Earth's crust and usually harmless in the water, but are indicators of geologic processes such as interactions with groundwater or acid mine drainage. At low pH, these elements become more toxic.</li>
+           </ul>
+           ")
+    )
+  })
+```
+
+
+Row 
+--------------------------------------------
+### Spatial Patterns
 ```{r, water map}
-#{data-height=2000}
-water <- left_join(water, site_attr %>% select(siteid, latitude, longitude, ecoregion, huc8, sysclass)) %>% 
+water <- left_join(water, site_attr %>% select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`)) %>% 
   filter(!is.na(longitude) & !is.na(latitude)) %>% 
     st_as_sf(coords = c('longitude', 'latitude')) %>% 
     st_set_crs(4326)
@@ -384,10 +532,9 @@ renderLeaflet({
 ```
 
 Row
---------------------------------------------
-### Histogram of parameter 
+---------------------------------------------
+### Parameter Distribution
 ```{r}
-# {data-height=2000}
 subpop <- reactive({
   req(input$subpop)
   
@@ -404,28 +551,26 @@ renderPlot({
   
   ggplot(data_hist, aes(x = value, fill = subpop)) + 
       geom_histogram(bins = 10, color = 'gray20') + 
-    scale_fill_brewer(palette = 'Paired', name = input$subpop) +   
+    scale_fill_brewer(palette = 'PuOr', name = input$subpop) + 
+    guides(fill = 'none') + 
       scale_x_continuous(label = scales::comma) + 
       labs(x = chart_title,
            y = 'Frequency') + 
+    coord_flip() + 
       theme_minimal()
     })
 ```
-  
-Row
----------------------------------------------
-### Boxplot of parameter
 
-```{r, water boxplot}
-# {data-height=2000}
+### Group Comparison
+```{r}
 renderPlot({
   req(subpop())
   data_box <- subpop()
   chart_info <- subset(water_param, parameter == unique(data_box$parameter))
   chart_title <- paste0(chart_info$definition[1], ' ', chart_info$units[1])
     ggplot(data_box, aes(x = subpop, y = value, fill = subpop)) + 
-      geom_boxplot(alpha = 0.9) + geom_jitter(width = 0.1, alpha = 0.8) + 
-      scale_fill_brewer(palette = 'Paired', name = NULL) + 
+      geom_boxplot(alpha = 0.9) + geom_jitter(width = 0.1, alpha = 0.8, color = '#5E5E5E') + 
+      scale_fill_brewer(palette = 'PuOr', name = NULL) + 
       guides(fill = 'none') +
       labs(x = NULL, y = chart_title) + 
       scale_x_discrete(labels = function(x){sub('\\s', '\n', x)}) + 
@@ -434,68 +579,111 @@ renderPlot({
   })
 ```
 
-Row
+Row {data-height=400}
 --------------------------------------------
-### Tabular output of parameter
+### Summary
+
 ```{r}
 renderDataTable({ 
-  table_df <- subpop()
-  table_df <- table_df %>% group_by(subpop) %>% 
+  table_df <- subpop() %>% 
+    st_drop_geometry() %>% 
+    group_by(subpop) %>% 
       summarise(
-        Samples = n(), 
+        `Sample Size` = n(), 
         Minimum = min(value, na.rm = TRUE), 
+        Median = median(value, na.rm = TRUE),
         Mean = mean(value, na.rm = TRUE), 
-        Median = median(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE)
-      ) 
-  table_df <- as.data.frame(table_df) %>% select(subpop:Maximum) %>% 
-    mutate(across(where(is.numeric), ~signif(., 2)))
+        Maximum = max(value, na.rm = TRUE), 
+        .groups = 'drop'
+      ) %>% 
+    mutate(across(where(is.numeric), ~signif(., 2))) %>% 
+    rename(Group = subpop) %>% 
+    select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
+  
   datatable(table_df,
-    rownames = FALSE)
+    rownames = FALSE,
+    class = 'compact dark-theme', 
+    options = list(
+      dom = 'ft', 
+      ordering = FALSE, 
+      autoWidth = TRUE, 
+      columnDefs = list(list(className = 'dt-center', targets = '_all'))
+    ))
 })
 ```
 
-Row
------------------------------------
-### Download Water Data {figure-height=100}
-
-```{r, download water, fig.height=0.5}
+### Download Water Data
+```{r new download}
 # Conditionally remove X column if it exists
 water_clean <- if("X" %in% names(water)) select(water, -X) else water
 water_param_clean <- if("X" %in% names(water_param)) select(water_param, -X) else water_param
 for_download <- left_join(water_clean, water_param_clean, by = 'parameter')
 
-downloadButton('download_data', 'Download Water Data')
+div(class = "download-box",
+    
+    #tags$h4("Download Water Data"),
+    
+    tags$p("Download water quality data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
+    
+    fluidRow(
+      column(6,
+             selectInput(
+               inputId = 'water_download',
+               label = 'Select Group',
+               choices = list(
+                 'Pollution Indicators' = 'polind',
+                 'Nutrients' = 'nuts',
+                 'Toxics' = 'toxic',
+                 'General Chemistry' = 'genchem'
+               ),
+               multiple = TRUE
+             )
+      ),
+      column(6,
+             downloadButton('download_data', label = 'Download', class = "btn-download")
+      )
+    )
+)
 
-selectInput('water_download',  'Water Download', 
-            choices = list('Pollution Indicators' = 'polind', 'Nutrients' = 'nuts','Toxics' = 'toxic', 
-                           'General Chemistry' = 'genchem'), 
-            multiple = TRUE, label = 'Select a group to download')
-
+# Filter data reactively
 filtered_water_data <- reactive({
   req(input$water_download)
-  for_download %>% 
-    filter(category == input$water_download)
+  for_download %>%
+    filter(category %in% input$water_download)
 })
 
-downloadHandler(
-  filename = function(){
-    paste0('wetland_waterchem', Sys.Date(), '.csv')
-  }, 
+# Create download
+output$download_data <- downloadHandler(
+  filename = function() {
+    paste0('wetland_waterchem_', Sys.Date(), '.csv')
+  },
   content = function(file) {
     write.csv(filtered_water_data(), file, row.names = FALSE)
   }
 )
 ```
 
+
+
 Soil Chemistry
 ========================================
-Soils are often more representative of the chemistry/environment of a wetland because they are always present, where water comes and goes. However, clear soil contaminant standards are not as widespread as water quality standards. 
+<h1> **Soil Chemistry** </h1>
+<!--Banner image -->
+<img src="playa_soils.jpg" class="banner-image">
 
-Row {data-height=100}
+Row
+----------------------------------------------
+###
+Soil is where plants are rooted, where the nutrients they need are stored, and where many of the biogeochemical processes that wetlands perform occur. Wetland soils are different from "upland" soils because flooding depletes oxygen in the soil. In the absence of oxygen, soil microbes transform nitrogen, manganese, sulfur, and compounds to metabolize. Water moves slowly through wetlands, which allows chemicals in the water column to settle out and bind to soils. The accumulation and transformation of chemicals in the soil give a more integrated picture of wetland chemistry than water. Soils are also a more reliable measure of the wetland environment because they are always present, whereas water is not. 
+
+Two types of soil measures are displayed below: general chemistry measures and nutrients that are the results of individual soil analyses and elemental scan results produced by mass spectrometry analysis. 
+
+Row {data-height=200}
 -------------------------------------------
-
-```{r, soil parameter picker}
+<div class="dropdown-container">
+  <div class="dropdown-item">
+  
+```{r soil category}
 soil <- soil %>% 
   mutate(category = case_when(
     parameter %in% c("nh4n_s", "no3n_s", "nh4n_e", "no3n_e", "po4p_s", "orgmat_s", 'ec_s', 'ph_s') ~ 'gennuts', 
@@ -509,7 +697,12 @@ selectInput('soil_category',  'Soil Chemistry Category',
             selected = 'gennuts')
 
 uiOutput('soil_param')
+```
 
+</div>
+<div class="dropdown-item">
+
+```{r soil parameter}
 renderUI({
   req(input$soil_category)
   
@@ -528,17 +721,60 @@ renderUI({
   #option for a label line
   selectInput('soil_param', label = label, choices = choices)
 })
+```
 
+</div>
+<div class="dropdown-item">
+
+```{r soil subpop}
 selectInput('subpop_soil', 'Subpopulation', 
-            choices = list('Watershed' = 'huc8', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'sysclass'), 
-            selected = 'huc8')
+            choices = list('Watershed' = 'Watershed', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'Wetland Type'), 
+            selected = 'Watershed')
+```
+
+</div>
+</div>
+
+Row {data-height=350}
+-------------------------------------------
+###
+
+```{r}
+htmlOutput('category_desc_soil')
+```
+
+```{r}
+output$category_desc_soil <- 
+  renderUI({
+    switch(input$soil_category, 
+           gennuts = HTML("
+             <p>General chemistry parameters are the key drivers of which organisms can survive in wetlands, based on tolerance to salinity, alkalinity, and organic matter. Nutrients are the compounds plants need to grow, including elements in fertilizers, and are most accessible to plants in soils. </p>
+             <ul>
+             <li><strong>pH</strong>measures the acidity (pH < 7) or alkalinity (pH > 7) of soil. Many Utah soils are alkaline due to the prevalence of carbonate rock.</li>
+             <li><strong>Conductivity</strong> is a measure of soil salinity. Saline soils are challenging for plants to grow in because they affect the plant's water balance. Many wetland plants have adaptations to survive salty soils.</li>
+             <li><strong>Organic matter</strong> is the portion of soil composed of material from organisms in various stages of decomposition. Organic matter builds up in wetland soils because decomposition is slower than in uplands. Soil organic matter provides crucial nutrients for plants and is a form of carbon storage.</li>
+             <li><strong>Nitrogen</strong> in soils is more easily accessed by plant roots than nitrogen in water, but is needed for the same cell processes. Nitrate and ammonia forms of nitrogen are both found in wetland soils, but ammonia concentration is often higher because nitrates are converted to other forms in oxygen-depleted conditions.</li>
+           <li><strong>Phosphorus</strong> accumulates in wetland soils because it readily binds to sediments. Plants are able to easily access phosphorus in soil for their metabolic needs, but much of it remains bound to soils and is a good indicator of legacy nutrient enrichment.</li>
+           </ul>
+           "), 
+           ipms = HTML("
+           <p>Soils reflect the elemental geology of a region, which can be determined using mass spectrometry to measure elemental concentrations in the soil. . The elements that accumulate in soils also reflect longer-term patterns of chemistry as contaminants are bound to and buried in soils.</p>
+           <ul>
+           <li><strong>Arsenic</strong>, <strong>cadmium</strong>, <strong>copper</strong>, <strong>nickel</strong>, <strong>lead</strong>, <strong>mercury</strong>, <strong>selenium</strong>, and <strong>zinc</strong> are metals and metalloids that indicate a history of contamination from industrial and residential sources. Arsenic and selenium are particularly concerning because they are toxic to wildlife that feed in wetlands.</li>
+           <li><strong>Potassium</strong>, <strong>calcium</strong>, <strong>magnesium</strong>, and <strong>sulfur</strong> are important plant macronutrients.</li> 
+           <li><strong>Boron</strong>, <strong>copper</strong>, <strong>iron</strong>, <strong>manganese</strong>, <strong>molybdenum</strong>, <strong>nickel</strong>, and <strong>zinc</strong> are critical micronutrients for plants.</li>
+           </ul>
+           ")
+    )
+  })
 ```
 
 Row
 ---------------------------------------
-### Map of parameter of interest
+### Spatial Patterns
+
 ```{r soil map}
-soil <- left_join(soil, site_attr %>% select(siteid, latitude, longitude, ecoregion, huc8, sysclass), by = 'siteid') %>% 
+soil <- left_join(soil, site_attr %>% select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`), by = 'siteid') %>% 
   filter(!is.na(longitude) & !is.na(latitude)) %>% 
     st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) 
 
@@ -569,7 +805,7 @@ renderLeaflet({
 
 Row
 ----------------------------------------
-### Histogram of parameter
+### Parameter Distribution
 ```{r, soil histogram}
 subpop_soil <- reactive({
   req(input$subpop_soil)
@@ -587,18 +823,19 @@ renderPlot({
   
   ggplot(data_hist_soil, aes(x = value, fill = subpop)) + 
       geom_histogram(bins = 10, color = 'gray20') + 
-      scale_fill_brewer(palette = 'Paired', 
+      scale_fill_brewer(palette = 'PuOr', 
                            name = NULL) + 
+    guides(fill = 'none') + 
       scale_x_continuous(label = scales::comma) + 
       labs(x = chart_title_soil,
            y = 'Frequency') + 
+    coord_flip() + 
       theme_minimal()
     })
 ```
 
-Row
-------------------------------------------
-### Boxplot of parameter
+
+### Group Comparison
 ```{r, soil boxplot}
 renderPlot({
   req(subpop_soil())
@@ -607,7 +844,7 @@ renderPlot({
   chart_title_soil <- paste0(chart_info_soil$definition[1], ' ', chart_info_soil$units[1])
     ggplot(data_box_soil, aes(x = subpop, y = value, fill = subpop)) + 
       geom_boxplot(alpha = 0.9) + geom_jitter(width = 0.1, alpha = 0.8) + 
-      scale_fill_brewer(palette = 'Paired') + 
+      scale_fill_brewer(palette = 'PuOr') + 
       guides(fill = 'none') +
       labs(x = '', y = chart_title_soil) + 
       scale_x_discrete(labels = function(x){sub('\\s', '\n', x)}) + 
@@ -616,30 +853,40 @@ renderPlot({
   })
 ```
 
-Row
+Row {data-height=400}
 ---------------------------------------
-### Tabular output of parameter 
+### Summary 
 
 ```{r, soil table}
 renderDataTable({ 
-  table_df_soil <- subpop_soil()
-  table_df_soil <- table_df_soil %>% group_by(subpop) %>% 
+  table_df_soil <- subpop_soil() %>% 
+    st_drop_geometry() %>% 
+    group_by(subpop) %>% 
       summarise(
-        Samples = n(), 
+        `Sample Size` = n(), 
         Minimum = min(value, na.rm = TRUE), 
-        Mean = mean(value, na.rm = TRUE), 
         Median = median(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE)
-      ) 
-  table_df_soil <- as.data.frame(table_df_soil) %>% select(subpop:Maximum) %>% 
-    mutate(across(where(is.numeric), ~signif(., 2)))
+        Mean = mean(value, na.rm = TRUE), 
+        Maximum = max(value, na.rm = TRUE), 
+        .groups = 'drop'
+      ) %>% 
+    mutate(across(where(is.numeric), ~signif(., 2))) %>% 
+    rename(Group = subpop) %>% 
+    select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
+  
   datatable(table_df_soil,
-    rownames = FALSE)
+    rownames = FALSE, 
+    class = 'compact dark-theme', 
+    options = list(
+      dom = 'ft', 
+      ordering = FALSE, 
+      autowidth = TRUE, 
+      columnDefs = list(list(className = 'dt-center', targets = '_all'))
+    ))
 })
 ```
 
-Row
------------------------------------------
+
 ### Download Soil Data
 
 ```{r, download soil}
@@ -648,22 +895,37 @@ soil_clean <- if("X" %in% names(soil)) select(soil, -X) else soil
 soil_param_clean <- if("X" %in% names(soil_param)) select(soil_param, -X) else soil_param
 for_download_soil <- left_join(soil_clean, soil_param_clean, by = 'parameter')
 
-downloadButton('download_data', 'Download Water Data')
+div(class = "download-box",
+    
+    tags$p("Download soil data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
+    
+    fluidRow(
+      column(6,
+             selectInput(
+               inputId = 'soil_download',
+               label = 'Select a group to download',
+               choices = list('General and Nutrients' = 'gennuts', 'Element Scan' = 'ipms'), 
+            multiple = TRUE
+             )
+      ),
+      column(6,
+             downloadButton('download_soil', label = 'Download', class = "btn-download")
+      )
+    )
+)
 
-selectInput('soil_download',  'Soil Download', 
-            choices = list('General and Nutrients' = 'gennuts', 'Element Scan' = 'ipms'), 
-            multiple = TRUE, label = 'Select a group to download')
-
+# Filter data reactively
 filtered_soil_data <- reactive({
   req(input$soil_download)
-  for_download_soil %>% 
-    filter(category == input$soil_download)
+  for_download_soil %>%
+    filter(category %in% input$soil_download)
 })
 
-downloadHandler(
-  filename = function(){
-    paste0('wetland_soilchem', Sys.Date(), '.csv')
-  }, 
+# Create download
+output$download_soil <- downloadHandler(
+  filename = function() {
+    paste0('wetland_soilchem_', Sys.Date(), '.csv')
+  },
   content = function(file) {
     write.csv(filtered_soil_data(), file, row.names = FALSE)
   }
@@ -672,8 +934,18 @@ downloadHandler(
 
 Wetland Macroinvertebrates
 =======================================
-Macroinvertebrates (definition) are awesome. However, much like water, it is not always possible to sample benthic macroinvertebrates because the benthos disappears when water retreats. 
+<h1> **Macroinvertebrates** </h1>
+<!--Banner image -->
+<img src="damselfly_moab.jpg" class="banner-image">
 
+Row
+---------------------------------------
+###
+Macroinvertebrates are organisms without internal skeletons that are larger than 0.5 mm. Common types of macroinvertebrates found in Utah wetlands include larval insects (midges, flies, dragonflies, etc.), worms, snails, and crayfish. Macroinvertebrates form crucial links in the wetland foodweb, feeding on plants and decomposing material and in turn being eaten by birds, amphibians, and fish. The community data presented here are benthic macroinvertebrates: the community of invertebrates that live in the water. Flying macroinvertebrates and those living on the plants are also important, but much harder to accurately count. The size, diversity, and makeup of benthic macroinvertebrates are indicators of ecosystem health and water quality, though research is still needed to determine which species are the most reliable signals of healthy wetlands.
+
+ - **Abundance** is the total number of macroinvertebrates of any group found in a sample gathered by sweeping a net at the soil/water interface.
+ - **Taxa Richness** is a count of all the different types of organisms in a sample. An organism can be identified at many levels, depending on the life stage of the invertebrate and the skill of the laboratory. Species is the most detailed taxonomic level, but especially small and cryptic invertebrates may only be identified to Order (e.g., mites are in the order Trombidiformes). From largest to smallest, taxonomic levels are Kingdom > Phylum > Class > Order > Family > Genus > Species.
+ - **ETO Relative Richness** is the proportion of the total measure of abundance that is composed of three orders of insects: Ephemeroptera (mayflies), Tricoptera (caddisflies), and Odonata (dragonflies and damselflies). These orders are especially sensitive to disturbances like changes in water quality. Samples with a majority of ETO taxa are indicators of lower disturbance and healthier wetlands.
 
 ```{r invert data munge}
 inverts <- inverts %>% 
@@ -800,25 +1072,62 @@ comm_data <- bind_rows(feed_group, bug_type, arthro_data)
 
 Row {data-height=100}
 -------------------------------------------
+<div class="dropdown-container">
+  <div class="dropdown-item">
 
 ```{r invert data pickers}
 selectInput('invert_param',  'Macroinvertebrate Metrics', 
             choices = list('Abundance' = 'abundance', 'Taxa Richness' = 'richness', 
                            'ETO Relative Richness' = 'eto_rel'), 
             selected = 'abundance')
-
-selectInput('subpop_invert', 'Subpopulation', 
-            choices = list('Watershed' = 'huc8', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'sysclass'), 
-            selected = 'huc8')
 ```
 
+</div>
+<div class="dropdown-item">
+
+```{r}
+selectInput('subpop_invert', 'Subpopulation', 
+            choices = list('Watershed' = 'Watershed', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'Wetland Type'), 
+            selected = 'Watershed')
+```
+
+</div>
+</div>
+
+
+Row {data-height=100}
+--------------------------------------------
+###
+
+```{r}
+htmlOutput('invert_desc')
+```
+
+```{r}
+output$invert_desc <- 
+  renderUI({
+    switch(input$invert_param, 
+           abundance = HTML("
+             <p><strong>Abundance</strong> is a the total number of macroinvertebrates of any group found in a sample, in this case, 1-m sweeps of the soil/water interface. Healthy wetlands have macroinvertebrate communities that are both abundant and diverse. 
+           </p>"), 
+           richness = HTML("
+           <p><strong>Taxa Richness</strong> is a count of all the different types of organisms in a sample. An organism can be identified at many levels, depending on the life stage of the invertebrate and the skill of the laboratory. Species is the most detailed taxanomic level, but especially small and cryptic invertebrates may only be identified to Order (ex. mites are in the order Trombidiformes). From largest to smallest, taxonmic levels are Kingdom > Phyllum > Class > Order > Family > Genus > Species.
+           </p>"), 
+           eto_rel = HTML("
+           <p><strong>ETO Relative Richness</strong> is the proportion of the total measure of abundance that is composed of three orders of insects: Ephemeroptera (mayflies), Tricoptera (caddisflies), and Odonata (dragon- and damselflies). These orders are especially sensitive to disturbances like changes in water quality. Samples with a majority of ETO taxa are indicators of low disturbance and heathier wetlands.
+           </p>")
+    )
+  })
+#ug. EPT (ephemeroptera, plecoptera, and trichoptera)
+#(O should be Plecoptera or stoneflies
+```
 
 Row
 ---------------------------------------
-### Map of parameter of interest
+### Spatial Patterns
 
 ```{r, invert map}
-invert_metrics_long <- left_join(invert_metrics_long, site_attr %>% select(siteid, latitude, longitude, ecoregion, huc8, sysclass), by = 'siteid') %>% 
+invert_metrics_long <- left_join(invert_metrics_long, site_attr %>% select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`), by = 'siteid') %>% 
   filter(!is.na(longitude) & !is.na(latitude)) %>% 
     st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) 
 
@@ -854,7 +1163,7 @@ renderLeaflet({
 
 Row
 ---------------------------------------
-### Histogram of parameter
+### Parameter Distribution
 
 ```{r, invert histogram}
 subpop_invert <- reactive({
@@ -873,18 +1182,18 @@ renderPlot({
   
   ggplot(data_hist_invert, aes(x = value, fill = subpop)) + 
       geom_histogram(bins = 10, color = 'gray20') + 
-      scale_fill_brewer(palette = 'Paired', 
+      scale_fill_brewer(palette = 'PuOr', 
                            name = NULL) + 
+    guides(fill = 'none') + 
       scale_x_continuous(label = scales::comma) + 
       labs(x = chart_title_invert,
            y = 'Frequency') + 
+    coord_flip() + 
       theme_minimal()
     })
 ```
 
-Row
-----------------------------------------
-### Boxplot of parameter
+### Group Comparison
 
 ```{r, invert boxplot}
 renderPlot({
@@ -894,58 +1203,122 @@ renderPlot({
   chart_title_invert <- paste0(chart_info_invert$definition[1], ' ', chart_info_invert$units[1])
     ggplot(data_invert, aes(x = subpop, y = value, fill = subpop)) + 
       geom_boxplot(alpha = 0.9) + geom_jitter(width = 0.1, alpha = 0.8) + 
-      scale_fill_brewer(palette = 'Paired', name = NULL) + 
+      scale_fill_brewer(palette = 'PuOr', name = NULL) + 
       guides(fill = 'none') +
       labs(x = '', y = chart_title_invert) + 
       scale_x_discrete(labels = function(x){sub('\\s', '\n', x)}) + 
       scale_y_continuous(label = comma) + 
       theme_minimal()
   })
-
 ```
 
-Row
+Row {data-height=400}
 ---------------------------------------
-### Tabular output of parameter
+### Summary
 
 ```{r, invert table}
 renderDataTable({ 
-  table_df_invert <- subpop_invert()
-  table_df_invert <- table_df_invert %>% group_by(subpop) %>% 
+  table_df_invert <- subpop_invert() %>% 
+    st_drop_geometry() %>% 
+    group_by(subpop) %>% 
       summarise(
-        Samples = n(), 
+        `Sample Size` = n(), 
         Minimum = min(value, na.rm = TRUE), 
-        Mean = mean(value, na.rm = TRUE), 
         Median = median(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE)
-      ) 
-  table_df_invert <- as.data.frame(table_df_invert) %>% select(subpop:Maximum) %>% 
-    mutate(across(where(is.numeric), ~signif(., 2)))
+        Mean = mean(value, na.rm = TRUE), 
+        Maximum = max(value, na.rm = TRUE), 
+        .groups = 'drop'
+      ) %>%
+    mutate(across(where(is.numeric), ~signif(., 2))) %>% 
+    rename(Group = subpop) %>% 
+    select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
+ 
   datatable(table_df_invert,
-    rownames = FALSE)
+            rownames = FALSE,
+            class = 'compact dark-theme', 
+            options = list(
+              dom = 'ft', 
+              ordering = FALSE, 
+              autowidth = TRUE, 
+              columnDefs = list(list(className = 'dt-center', targets = '_all'))
+            ))
 })
 ```
 
+### Download Macroinvertebrate Data
+
+```{r, invert download}
+for_download_invert <- pivot_wider(
+  inverts, 
+  id_cols = siteid, 
+  names_from = taxon, 
+  values_from = abundance, 
+  values_fill = NA
+)
+
+for_download_invert <- left_join(for_download_invert, site_attr %>% select(siteid, date, latitude, longitude))
+
+div(class = "download-box",
+    
+    tags$p("Download macroinvertebrate data in a convenient format for your own analysis, research, or reporting."),
+    
+    fluidRow(
+      column(12,
+             downloadButton('download_invert', label = 'Download', class = "btn-download")
+      )
+    )
+)
+
+output$download_invert <- downloadHandler(
+  filename = function(){
+    paste0('wetland_inverts', Sys.Date(), '.csv')
+  }, 
+  content = function(file) {
+    write.csv(for_download_invert(), file, row.names = FALSE)
+  }
+)
+```
+
+Row 
+------------------------------------------
+### Macroinvertebrate Community Plots
+
+The relative abundance of macroinvertebrate community components can provide even more detail on wetland functions. Use the dropdown below to explore the relative abundance of feeding groups, types of macroinvertebrates, and types of arthropods. 
+
+ - Diversity in macroinvertebrate communities is reflected in diverse feeding groups. Some collect food by filtering water or gathering from surfaces. Snails and others scrape algae from soils and plants. Some macroinvertebrates eat plants by shredding or piercing them. Still others are predators, consuming smaller macroinvertebrates. 
+ - Exploring the types of macroinvertebrates shows more of the differences between the types of wetlands. Some wetland types may be better habitat for the larvae of flying insects that will later hatch, while others support beetles and isopods that live their whole lives in water. 
+ - **Arthropods** -- the class of macroinvertebrates with hard exoskeletons -- are among the most diverse animal groups in the world and wetland arthropod communities are no exception. 
+
+
 Row {data-height=100}
 -------------------------------------------
-
+<div class="dropdown-container">
+  <div class="dropdown-item">
+  
 ```{r, comm dropdown}
 selectInput('invert_comm',  'Community Metrics', 
             choices = list('Feeding Group' = 'feed_grp', 'Bug Type' = 'bug_type', 'Arthropod Order' = 'arthropod'), 
                           selected = 'feed_grp')
-
-selectInput('subpop_comm', 'Subpopulation', 
-            choices = list('Watershed' = 'huc8', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'sysclass'), 
-            selected = 'huc8')
 ```
+
+</div>
+<div class="dropdown-item">
+
+```{r}
+selectInput('subpop_comm', 'Subpopulation', 
+            choices = list('Watershed' = 'Watershed', 'Ecoregion' = 'ecoregion', 'Wetland Type' = 'Wetland Type'), 
+            selected = 'Watershed')
+```
+</div>
+</div>
+
 
 Row
 ---------------------------------------------
-### Macroinvertebrate Community Plots
 
 ```{r, community plot}
 comm_data <- comm_data %>% 
-  left_join(site_attr %>% select(siteid, ecoregion, huc8, sysclass), by = 'siteid')
+  left_join(site_attr %>% select(siteid, ecoregion, Watershed, `Wetland Type`), by = 'siteid')
 
 filtered_comm <- reactive({
   req(input$invert_comm)
@@ -977,32 +1350,3 @@ renderPlot({
      #theme(axis.text.x = element_text(angle = 30, hjust = 1))
 })
 ```
-
-Row
-------------------------------------
-### Macroinvertebrate Data Download
-
-```{r, invert download}
-for_download_invert <- pivot_wider(
-  inverts, 
-  id_cols = siteid, 
-  names_from = taxon, 
-  values_from = abundance, 
-  values_fill = NA
-)
-
-for_download_invert <- left_join(for_download_invert, site_attr %>% select(siteid, date, latitude, longitude))
-
-downloadButton('download_data', 'Download Invertebrate Data')
-
-downloadHandler(
-  filename = function(){
-    paste0('wetland_inverts', Sys.Date(), '.csv')
-  }, 
-  content = function(file) {
-    write.csv(for_download_invert(), file, row.names = FALSE)
-  }
-)
-
-```
-
