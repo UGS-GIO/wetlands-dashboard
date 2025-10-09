@@ -65,3 +65,4 @@ EXPOSE 8080
 
 # Set user
 USER shiny
+
