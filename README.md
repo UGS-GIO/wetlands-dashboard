@@ -48,30 +48,4 @@ git push origin main
 
 Your next deploy will take **2-3 minutes** instead of 30+! 🎉
 
-## 📚 Which Guide to Read?
 
-- **Just want commands?** → `QUICK_REFERENCE.md`
-- **Need detailed explanation?** → `IMPLEMENTATION_GUIDE.md`
-- **Using Cloud Build?** → `CLOUD_BUILD_GUIDE.md`
-- **Using GitHub Actions?** → See `IMPLEMENTATION_GUIDE.md` Step 1, Option B
-
-## ❓ Questions?
-
-Check the **Troubleshooting** section in `IMPLEMENTATION_GUIDE.md` or the Cloud Build specific guide.
-
-## 💡 Key Concept
-
-**Before:** Every build installs everything (30+ min)
-```
-Install System Libs → Install R Packages → Copy App Code = 30+ minutes
-```
-
-**After:** Base image has everything installed (one-time), app builds just copy code
-```
-Base Image (one-time): Install System Libs → Install R Packages = 30 min
-App Builds: Copy App Code = 2-3 minutes ⚡
-```
-
----
-
-**Ready to get started?** Open `IMPLEMENTATION_GUIDE.md` and follow Step 1!
