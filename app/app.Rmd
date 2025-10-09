@@ -36,7 +36,7 @@ fetch_data <- function(table_name, csv_filename = NULL) {
   # Check cache first
   cache_key <- paste0("wetdash_", table_name)
   if (exists(cache_key, envir = api_cache)) {
-    cat("Using cached data for", table_name, "\n")
+    # Silent caching - no message
     return(get(cache_key, envir = api_cache))
   }
   
@@ -53,7 +53,7 @@ fetch_data <- function(table_name, csv_filename = NULL) {
     status <- status_code(response)
     
     if (status == 200) {
-      cat("✅ Successfully fetched", table_name, "from API\n")
+      # Silent success - no message
       data <- fromJSON(content(response, "text", encoding = "UTF-8"))
       
       # Convert to data frame if it's a list
@@ -68,10 +68,10 @@ fetch_data <- function(table_name, csv_filename = NULL) {
       assign(cache_key, data, envir = api_cache)
       return(data)
     } else if (status == 401) {
-      cat("🔒 API returned 401 Unauthorized for", table_name, "- falling back to CSV\n")
+      # Silent fallback - no message
       stop("API Unauthorized")
     } else {
-      cat("⚠️ API returned status code:", status, "for", table_name, "\n")
+      # Silent error - no message
       stop("API request failed with status: ", status)
     }
   }, error = function(e) {
@@ -79,12 +79,7 @@ fetch_data <- function(table_name, csv_filename = NULL) {
     csv_file <- if (is.null(csv_filename)) paste0(table_name, ".csv") else csv_filename
     
     if (file.exists(csv_file)) {
-      cat("📁 Using CSV fallback for", table_name, ":", csv_file, "\n")
-      if (grepl("401|Unauthorized", e$message)) {
-        cat("   Reason: API access restricted for this table\n")
-      } else {
-        cat("   Reason:", e$message, "\n")
-      }
+      # Silent fallback - no message
       data <- read.csv(csv_file)
       
       # Store source info for status display
@@ -102,12 +97,10 @@ fetch_data <- function(table_name, csv_filename = NULL) {
 # Function to clear cache if needed
 clear_cache <- function() {
   rm(list = ls(envir = api_cache), envir = api_cache)
-  cat("Cache cleared\n")
+  # Silent cache clear
 }
 
-# Load all data using the new fetch function
-cat("Loading data from API with CSV fallback...\n")
-
+# Load all data using the new fetch function (silently)
 site_attr <- fetch_data("site_attr")
 flags <- fetch_data("flags")
 inverts <- fetch_data("inverts")
@@ -116,8 +109,6 @@ soil <- fetch_data("soil")
 soil_param <- fetch_data("soil_param")
 water <- fetch_data("water")
 water_param <- fetch_data("water_param")
-
-cat("Data loading complete!\n")
 
 # Optional: Add a reactive function to refresh data
 refresh_data <- function() {
@@ -133,7 +124,7 @@ refresh_data <- function() {
   water <<- fetch_data("water")
   water_param <<- fetch_data("water_param")
   
-  cat("Data refreshed!\n")
+  # Silent refresh complete
 }
 
 # Commented out original CSV loading for reference
