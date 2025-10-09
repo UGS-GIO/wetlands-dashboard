@@ -299,14 +299,37 @@ The bulk of data included here is from samples gathered as part of wetland condi
 ### Data Source Status
 ```{r data source status}
 renderText({
-  # Check if any data came from API (cached data will have been fetched from API initially)
+  # Check data sources for each table
   api_tables <- c("site_attr", "flags", "inverts", "invert_param", "soil", "soil_param", "water", "water_param")
   cached_count <- length(ls(envir = api_cache))
   
   if (cached_count > 0) {
-    paste("✓ Data loaded successfully.", cached_count, "tables cached.")
+    # Check which tables came from API vs CSV
+    api_count <- 0
+    csv_count <- 0
+    
+    for (table in api_tables) {
+      cache_key <- paste0("wetdash_", table)
+      if (exists(cache_key, envir = api_cache)) {
+        data_obj <- get(cache_key, envir = api_cache)
+        source_type <- attr(data_obj, "data_source")
+        if (!is.null(source_type) && source_type == "API") {
+          api_count <- api_count + 1
+        } else {
+          csv_count <- csv_count + 1
+        }
+      }
+    }
+    
+    if (api_count == cached_count) {
+      paste("API Data: All", cached_count, "tables loaded from PostgREST API")
+    } else if (csv_count == cached_count) {
+      paste("CSV Fallback: All", cached_count, "tables loaded from CSV files")
+    } else {
+      paste("Mixed Sources:", api_count, "tables from API,", csv_count, "tables from CSV")
+    }
   } else {
-    "⚠ Using fallback CSV data."
+    "No data loaded"
   }
 })
 
@@ -927,7 +950,7 @@ Wetland Macroinvertebrates
 =======================================
 <h1> **Macroinvertebrates** </h1>
 <!--Banner image -->
-<img src="damselfly_moab.JPG" class="banner-image">
+<img src="damselfly_moab.jpg" class="banner-image">
 
 Row
 ---------------------------------------
