@@ -1,0 +1,344 @@
+/* === BODY BACKGROUND & FONT COLOR === */
+body {
+  background-color: #1B1B1B; /* Main background */
+  color: #FFFFFF;           /* Font color */
+  font-family: 'Segoe UI', sans-serif/*"Helvetica Neue", Helvetica, Arial, sans-serif;*/
+}
+
+/* === HEADER (NAVBAR) STYLING === */
+.navbar {
+  background-color: #363636 !important;   /* Header background */
+  border: 1px solid #5E5E5E; /*thin light gray border*/
+  border-radius: 12px; /*rounded border edges*/
+  margin: 0, 10px, 0, 10px;
+  /*padding: 10 10px;/* changed padding to 0,0px so that it doesn't have the gap at the top*/
+  /*display: flex; /* new oct 1 broke into two lines */
+  /*align-items: center;*/
+  justify-content: space-between;/* new oct 1 */
+  /*padding-top: 0 10px;*/
+  min-height: 60px;
+  /*font-size 40px; */
+  position: relative;
+}
+
+body{
+  padding-top: 10px !important; /*this line keeps everything flush at the top; needs to be separate from the other body section
+} 
+
+/* === HEADER LOGO + TITLE === */
+.navbar .navbar-brand {
+  display: flex; /* new line */
+  align-items: center; /*new*/
+  gap: 10px; /*new*/
+  margin: 0;
+  padding: 10px;
+  position: relative; /*new oct 1 */
+  color: #FFFFFF !important;
+  font-weight: bold;
+  font-size: 40px; /*title font height*/
+  white-space: nowrap; /* to navbar text wrap */
+}
+
+/*.navbar .navbar-brand img {
+  height: 40px; 
+  width: auto;
+}*/
+
+.navbar-logo img {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+.navbar-nav{
+  display: flex; 
+  flex-direction:row;
+  margin: 0;
+  padding:0;
+}
+
+.navbar-nav > li {
+  display: flex;
+  align-items: center;
+}
+
+/* ===NAVBAR TABS === */
+.navbar-nav > li > a {
+  color:#FFFFFF !important; /*tab font color*/
+  padding: 10px 10px;
+  border-bottom: 3px solid transparent; /*setup for current tab and hover tab underline*/
+  font-weight: 500;
+  font-size: 18px; /*font size for tab names */
+  /*margin-left: auto;/* new oct 1 */
+  /*margin-right: auto;/* new oct 1 */
+}
+
+.navbar-nav { 
+  white-space: nowrap;
+}
+
+/* === ACTIVE TAB === */
+.navbar-nav > .active > a,
+.navbar-nav > .active > a:focus,
+.navbar-nav > .active > a:hover {
+  background-color: transparent !important;
+  border-bottom: 3px solid #E69800;
+  color: #FFFFFF !important;
+}
+
+/* === HOVER TAB (non-active) === */
+.navbar-nav > li > a:hover {
+  background-color: transparent !important;
+  border-bottom: 3px solid #AAAAAA;
+  color: #FFFFFF !important;
+}
+
+
+/* === SECTION TITLES === */
+h2.section.level2 { 
+  color: #E69800;
+  /*border-bottom: 0 solid #5E5E5E;*/
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+/* === ROW STYLING === */
+.section {
+  padding: 5px;   /* keep spacing but no background or border */
+  background: none;
+  border: none;
+  margin: 0 5px, 0, 5px;       /* no margin for container rows */
+}
+
+.section > .section:not(:has(.section)) {
+  background-color: #282828;   /* Row background */
+  border: 1px solid #5E5E5E;   /* Border */
+  border-radius: 12px;
+  padding: 5px;
+  margin: 0 5px 5px 5px;    /* symmetric spacing */
+}
+
+/* Add spacing only between bullet points */
+ul li, ol li {
+  margin-bottom: 0.5em;  /* Adjust value as needed */
+}
+
+
+/* === HYPERLINK STYLING === */
+a {
+  color: #E69800;           /* Orange links */
+  text-decoration: none;
+}
+
+a:hover {
+  color: #FFFFFF;           /* Hover color */
+  text-decoration: underline;
+}
+
+/* === OPTIONAL: TABLE STYLING === */
+table {
+  background-color: #282828;
+  color: #FFFFFF;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th,
+table td {
+  border: 1px solid #5E5E5E;
+  /*padding: 10px;*/
+}
+
+/* === VALUE BOX STYLING === */
+.value-box {
+  background-color: #261900;
+  color: #FFFFFF;
+  border: 1px solid #E69800;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+/* === VALUE BOX ICON === */
+.value-box .icon i{
+  color: #664300 !important;  /* Set icon color */
+  font-size: 80px; /* Optional */
+}
+
+/* === DROPDOWNS === */
+.dropdown-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  /*justify-content: space-between; /* or use space-around */
+  gap: 10px 10px;  /* Optional: space between dropdowns */
+  margin-bottom: 20px;
+  margin: 10px auto;
+  width: 100%;
+  max-width: 1100px;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.dropdown-item {
+  display: flex;
+  flex-direction: column; /*stacks label above dropdown */
+  align-items: center; /*center both label and select horizontally */
+  text-align: center;
+  margin: 0;
+}
+
+.dropdown-item select {
+  min-width: 160px;
+  max-width: 250px;
+  width: auto;
+  margin-top: 4px;
+}
+
+/* Optional: remove extra Flexdashboard padding that causes tall rows */
+.section.level2, .level2 > .well {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Responsive breakpoint for wrapping (tweak width as needed) */
+@media (max-width: 800px) {
+  .dropdown-container {
+    justify-content: center;
+    gap: 8px 20px;
+  }
+}
+/*.dropdown-item {
+  flex: 1;  /* Makes each dropdown take equal space */
+/*}*/
+
+/* === Banner image === */
+.banner-image {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+  margin: 0 10px 20px 10px;
+  border-radius: 12px;
+  /*margin-bottom: 20px;*/
+}
+
+/* Dark theme for DataTable */
+table.dataTable.dark-theme {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+table.dataTable.dark-theme thead {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+table.dataTable.dark-theme td, 
+table.dataTable.dark-theme th {
+  border: 1px solid #444; 
+  padding: 12px 15px;
+}
+
+table.dataTable.dark-theme {
+  border-collapse: collapse; /* Ensure borders render cleanly */
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+table.dataTable.dark-theme tbody tr {
+  border-bottom: 1px solid #333;
+}
+
+table.dataTable.dark-theme tbody tr:last-child {
+  border-bottom: none;
+}
+
+table.dataTable.dark-theme tbody tr:hover {
+  background-color: #333;
+}
+
+/* Style the search box */
+.dataTables_filter input {
+  background-color: #2a2a2a;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.dataTables_filter label {
+  color: #fff;
+}
+
+/* Remove borders and shadow from the outer container */
+.dataTables_wrapper {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Download button */
+/* Style container */
+.download-box {
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+/* Style for the download button */
+.btn-download {
+  background-color: #f5a623;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  margin-top: 25px;
+}
+
+.btn-download:hover {
+  background-color: #e6951c;
+  color: #000;
+}
+
+/* Optional: style select input */
+/*select.form-control {
+  background-color: #eee;
+  color: #000;
+  border-radius: 4px;
+}
+
+/* === FLEX CONTAINERS FOR IMAGE + CAPTION === */
+/* Caption below knitr images */
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.figure img {
+  border: 2px solid #ccc;      /* border around image */
+  border-radius: 12px;          /* rounded corners */
+  max-height: 80vh;            /* scale image to viewport height */
+  width: auto;                 /* maintain aspect ratio */
+}
+/* Optional: caption text styling */
+.figure .caption {
+  background-color: #2a2a2a;
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  padding: 6px 10px;
+  margin-top: 4px;
+  border-radius: 0 0 6px 6px;
+  width: 100%;
+}
