@@ -648,7 +648,10 @@ renderDataTable({
 
 ### Download Water Data
 ```{r new download}
-for_download <- left_join(water %>% select(-X), water_param %>% select(-X), by = 'parameter')
+# Conditionally remove X column if it exists
+water_clean <- if("X" %in% names(water)) select(water, -X) else water
+water_param_clean <- if("X" %in% names(water_param)) select(water_param, -X) else water_param
+for_download <- left_join(water_clean, water_param_clean, by = 'parameter')
 div(class = "download-box",
     
     #tags$h4("Download Water Data"),
@@ -920,7 +923,9 @@ renderDataTable({
 ### Download Soil Data
 
 ```{r, download soil}
-for_download_soil <- left_join(soil %>% select(-X), soil_param %>% select(-X), by = 'parameter')
+soil_clean <- if("X" %in% names(soil)) select(soil, -X) else soil
+soil_param_clean <- if("X" %in% names(soil_param)) select(soil_param, -X) else soil_param
+for_download_soil <- left_join(soil_clean, soil_param_clean, by = 'parameter')
 div(class = "download-box",
     
     tags$p("Download soil data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
