@@ -1302,12 +1302,12 @@ div(class = "download-box",
     )
 )
 
-downloadHandler(
+output$download_invert <- downloadHandler(
   filename = function(){
-    paste0('wetland_inverts', Sys.Date(), '.csv')
+    paste0('wetland_inverts_', Sys.Date(), '.csv')
   }, 
   content = function(file) {
-    write.csv(for_download_invert(), file, row.names = FALSE)
+    write.csv(for_download_invert, file, row.names = FALSE)
   }
 )
 ```
