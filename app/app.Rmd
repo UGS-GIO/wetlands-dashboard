@@ -649,9 +649,11 @@ renderDataTable({
 ### Download Water Data
 ```{r new download}
 # Conditionally remove X column if it exists
-water_clean <- if("X" %in% names(water)) select(water, -X) else water
-water_param_clean <- if("X" %in% names(water_param)) select(water_param, -X) else water_param
-for_download <- left_join(water_clean, water_param_clean, by = 'parameter')
+for_download <- left_join(
+  water %>% select(-any_of("X")), 
+  water_param %>% select(-any_of("X")), 
+  by = 'parameter'
+)
 div(class = "download-box",
     
     #tags$h4("Download Water Data"),
@@ -923,9 +925,11 @@ renderDataTable({
 ### Download Soil Data
 
 ```{r, download soil}
-soil_clean <- if("X" %in% names(soil)) select(soil, -X) else soil
-soil_param_clean <- if("X" %in% names(soil_param)) select(soil_param, -X) else soil_param
-for_download_soil <- left_join(soil_clean, soil_param_clean, by = 'parameter')
+for_download_soil <- left_join(
+  soil %>% select(-any_of("X")), 
+  soil_param %>% select(-any_of("X")), 
+  by = 'parameter'
+)
 div(class = "download-box",
     
     tags$p("Download soil data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
@@ -1289,7 +1293,9 @@ for_download_invert <- pivot_wider(
   values_fill = NA
 )
 
-for_download_invert <- left_join(for_download_invert, site_attr %>% select(siteid, date, latitude, longitude))
+for_download_invert <- left_join(for_download_invert, site_attr %>% select(siteid, date, latitude, longitude), by = 'siteid') %>% 
+  left_join(invert_metrics, by = 'siteid') %>% 
+  left_join(invert_taxon %>% select(taxon, feed_group, group), by = c('siteid' = 'taxon'))
 
 div(class = "download-box",
     
