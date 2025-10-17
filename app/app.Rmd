@@ -662,23 +662,34 @@ div(class = "download-box",
     
     fluidRow(
       column(6,
-             selectInput(
-               inputId = 'water_download',
-               label = 'Select Group',
-               choices = list(
-                 'Pollution Indicators' = 'polind',
-                 'Nutrients' = 'nuts',
-                 'Toxics' = 'toxic',
-                 'General Chemistry' = 'genchem'
-               ),
-               multiple = TRUE
-             )
+            selectInput(
+              inputId = 'water_download',
+              label = 'Select Group',
+              choices = list(
+                'Pollution Indicators' = 'polind',
+                'Nutrients' = 'nuts',
+                'Toxics' = 'toxic',
+                'General Chemistry' = 'genchem'
+              ),
+              multiple = TRUE
+            )
       ),
       column(6,
-             downloadButton('download_data', label = 'Download', class = "btn-download")
+            uiOutput('water_download_button')
       )
     )
 )
+
+# Conditionally render download button
+output$water_download_button <- renderUI({
+  if (is.null(input$water_download) || length(input$water_download) == 0) {
+    tags$button("Download", class = "btn btn-download", disabled = "disabled", 
+                style = "margin-top: 25px; opacity: 0.5; cursor: not-allowed;")
+  } else {
+    downloadButton('download_data', label = 'Download', class = "btn-download", 
+                   style = "margin-top: 25px;")
+  }
+})
 
 # Filter data reactively
 filtered_water_data <- reactive({
@@ -936,18 +947,29 @@ div(class = "download-box",
     
     fluidRow(
       column(6,
-             selectInput(
-               inputId = 'soil_download',
-               label = 'Select a group to download',
-               choices = list('General and Nutrients' = 'gennuts', 'Element Scan' = 'ipms'), 
-            multiple = TRUE
-             )
+            selectInput(
+              inputId = 'soil_download',
+              label = 'Select a group to download',
+              choices = list('General and Nutrients' = 'gennuts', 'Element Scan' = 'ipms'), 
+              multiple = TRUE
+            )
       ),
       column(6,
-             downloadButton('download_soil', label = 'Download', class = "btn-download")
+            uiOutput('soil_download_button')
       )
     )
 )
+
+# Conditionally render download button
+output$soil_download_button <- renderUI({
+  if (is.null(input$soil_download) || length(input$soil_download) == 0) {
+    tags$button("Download", class = "btn btn-download", disabled = "disabled", 
+                style = "margin-top: 25px; opacity: 0.5; cursor: not-allowed;")
+  } else {
+    downloadButton('download_soil', label = 'Download', class = "btn-download", 
+                   style = "margin-top: 25px;")
+  }
+})
 
 # Filter data reactively
 filtered_soil_data <- reactive({
