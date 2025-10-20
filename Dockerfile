@@ -5,7 +5,10 @@ FROM us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboar
 USER root
 
 # Copy shiny app and all data files into the Docker image
-COPY app /srv/shiny-server/
+COPY app/ /srv/shiny-server/
+
+# Make sure permissions are correct
+RUN chown -R shiny:shiny /srv/shiny-server
 
 # Remove default index.html if it exists
 RUN rm -f /srv/shiny-server/index.html
