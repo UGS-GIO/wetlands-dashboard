@@ -876,34 +876,34 @@ Row {data-height=500} <!-- Water Row 5: summary and download -->
 
 <!-- Water Row 5 Column 1: summary table -->
 ```{r water summary table}
-div(style = "height:480px;", 
-renderDataTable({ 
-  table_df <- subpop() %>% 
-    st_drop_geometry() %>% 
-    group_by(subpop) %>% 
+div(class = "summary-box",
+renderDataTable({
+  table_df <- subpop() %>%
+    st_drop_geometry() %>%
+    group_by(subpop) %>%
       summarise(
-        `Sample Size` = n(), 
-        Minimum = min(value, na.rm = TRUE), 
+        `Sample Size` = n(),
+        Minimum = min(value, na.rm = TRUE),
         Median = median(value, na.rm = TRUE),
-        Mean = mean(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE), 
+        Mean = mean(value, na.rm = TRUE),
+        Maximum = max(value, na.rm = TRUE),
         .groups = 'drop'
-      ) %>% 
-    mutate(across(where(is.numeric), ~signif(., 2))) %>% 
-    rename(Group = subpop) %>% 
+      ) %>%
+    mutate(across(where(is.numeric), ~signif(., 2))) %>%
+    rename(Group = subpop) %>%
     select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
-  
+
   datatable(table_df,
     rownames = FALSE,
-    class = 'compact dark-theme', 
+    class = 'compact dark-theme',
     options = list(
-      dom = 'ft', 
-      ordering = FALSE, 
-      autoWidth = FALSE, 
+      dom = 'ft',
+      ordering = FALSE,
+      autoWidth = FALSE,
       columnDefs = list(
         list(className = 'dt-center', targets = '_all')
         )
-    )) %>% 
+    )) %>%
     formatStyle(columns = 0:5, width = '150px')
 })
 )
@@ -1333,39 +1333,41 @@ renderPlot({
 
 Row {data-height=500} <!-- Section Soil Row 5 - summary & download --> 
 ---------------------------------------
-### Summary 
-<!-- Soil Row 5 Column 1 - summary table --> 
+### Summary
+<!-- Soil Row 5 Column 1 - summary table -->
 
 ```{r soil table}
-renderDataTable({ 
-  table_df_soil <- subpop_soil() %>% 
-    st_drop_geometry() %>% 
-    group_by(subpop) %>% 
+div(class = "summary-box",
+renderDataTable({
+  table_df_soil <- subpop_soil() %>%
+    st_drop_geometry() %>%
+    group_by(subpop) %>%
       summarise(
-        `Sample Size` = n(), 
-        Minimum = min(value, na.rm = TRUE), 
-        Median = median(value, na.rm = TRUE), 
-        Mean = mean(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE), 
+        `Sample Size` = n(),
+        Minimum = min(value, na.rm = TRUE),
+        Median = median(value, na.rm = TRUE),
+        Mean = mean(value, na.rm = TRUE),
+        Maximum = max(value, na.rm = TRUE),
         .groups = 'drop'
-      ) %>% 
-    
+      ) %>%
+
     mutate(
-      across(where(is.numeric), ~signif(., 2))) %>% 
-    rename(Group = subpop) %>% 
+      across(where(is.numeric), ~signif(., 2))) %>%
+    rename(Group = subpop) %>%
     select(
       Group, `Sample Size`, Minimum, Median, Mean, Maximum)
-  
+
   datatable(table_df_soil,
-    rownames = FALSE, 
-    class = 'compact dark-theme', 
+    rownames = FALSE,
+    class = 'compact dark-theme',
     options = list(
-      dom = 'ft', 
-      ordering = FALSE, 
-      autowidth = FALSE, 
+      dom = 'ft',
+      ordering = FALSE,
+      autowidth = FALSE,
       columnDefs = list(list(className = 'dt-center', targets = '_all'))
     ))
 })
+)
 ```
 
 
@@ -1745,38 +1747,40 @@ renderPlot({
 Row {data-height=500} <!-- Section Invert Row 5: summary and download --> 
 ---------------------------------------
 ### Summary
-<!-- Section Invert Row 5 Column 1: summary table --> 
+<!-- Section Invert Row 5 Column 1: summary table -->
 ```{r invert table}
-renderDataTable({ 
-  table_df_invert <- subpop_invert() %>% 
-    st_drop_geometry() %>% 
+div(class = "summary-box",
+renderDataTable({
+  table_df_invert <- subpop_invert() %>%
+    st_drop_geometry() %>%
     group_by(subpop) %>% #MI2
       summarise( #calculate statistics below
-        `Sample Size` = n(), 
-        Minimum = min(value, na.rm = TRUE), 
-        Median = median(value, na.rm = TRUE), 
-        Mean = mean(value, na.rm = TRUE), 
-        Maximum = max(value, na.rm = TRUE), 
+        `Sample Size` = n(),
+        Minimum = min(value, na.rm = TRUE),
+        Median = median(value, na.rm = TRUE),
+        Mean = mean(value, na.rm = TRUE),
+        Maximum = max(value, na.rm = TRUE),
         .groups = 'drop'
       ) %>%
     mutate(
-      across(where(is.numeric), 
+      across(where(is.numeric),
              ~signif(., 2))) %>% #round to 2 significant figures
-    rename(Group = subpop) %>% 
+    rename(Group = subpop) %>%
     select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
- 
+
   datatable(table_df_invert,
             rownames = FALSE,
-            class = 'compact dark-theme', 
+            class = 'compact dark-theme',
             options = list(
-              dom = 'ft', 
-              ordering = FALSE, 
-              autowidth = FALSE, 
+              dom = 'ft',
+              ordering = FALSE,
+              autowidth = FALSE,
               columnDefs = list(
                 list(
                   className = 'dt-center', targets = '_all'))
               ))
   })
+)
 ```
 
 ### Download Macroinvertebrate Data

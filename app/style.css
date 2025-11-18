@@ -334,12 +334,24 @@ table.dataTable.dark-theme tbody tr:hover {
 }
 </style>
 
-/* === DOWNLOAD BUTTON === */
+/* === SUMMARY BOX === */
+.summary-box {
+  padding: 15px;
+  margin: 5px;
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === DOWNLOAD BOX === */
 /* Style container */
 .download-box {
-  padding: 10px;
-  margin-bottom: 20px;
+  padding: 15px;
+  margin: 5px;
   overflow: visible !important;  /* Allow dropdowns to expand beyond container */
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .download-box .selectize-dropdown {
