@@ -517,7 +517,7 @@ water_param$definition <-
          water_param$definition)
 ```
 
-Row {data-height=500} <!-- Water Row 2: Dropdowns & text --> 
+Row {data-height=350} <!-- Water Row 2: Dropdowns & text --> 
 -------------------------------------------
 <!-- Water Row 2 Column 1: dropdowns --> 
 <div class="dropdown-container">
@@ -870,13 +870,13 @@ renderPlot({
   })
 ```
 
-Row {data-height=400 .fixed-height} <!-- Water Row 5: summary and download --> 
+Row {data-height=500} <!-- Water Row 5: summary and download -->
 --------------------------------------------
-### Summary 
+### Summary
 
-<!-- Water Row 5 Column 1: summary table --> 
+<!-- Water Row 5 Column 1: summary table -->
 ```{r water summary table}
-div(style = "height:380px;", 
+div(style = "height:480px;", 
 renderDataTable({ 
   table_df <- subpop() %>% 
     st_drop_geometry() %>% 
@@ -1011,7 +1011,7 @@ Two types of soil measures are displayed below: general chemistry measures and n
 </div>
 
 
-Row {data-height=500} <!-- Section Soil Row 2: dropdowns and text --> 
+Row {data-height=350} <!-- Section Soil Row 2: dropdowns and text --> 
 -------------------------------------------
 <!-- Section Soil Row 2 Column 2: dropdown selectors --> 
 <div class="dropdown-container">
@@ -1331,7 +1331,7 @@ renderPlot({
   })
 ```
 
-Row {data-height=400} <!-- Section Soil Row 5 - summary & download --> 
+Row {data-height=500} <!-- Section Soil Row 5 - summary & download --> 
 ---------------------------------------
 ### Summary 
 <!-- Soil Row 5 Column 1 - summary table --> 
@@ -1491,7 +1491,7 @@ invert_metrics_long <- invert_metrics %>%
 )
 ```
 
-Row {data-height=200} <!-- Section Invert Row 2: dropdowns --> 
+Row {data-height=300} <!-- Section Invert Row 2: dropdowns --> 
 -------------------------------------------
 <!-- Section Invert Row 1 Column 1: dropdowns --> 
 
@@ -1742,7 +1742,7 @@ renderPlot({
   })
 ```
 
-Row {data-height=400} <!-- Section Invert Row 5: summary and download --> 
+Row {data-height=500} <!-- Section Invert Row 5: summary and download --> 
 ---------------------------------------
 ### Summary
 <!-- Section Invert Row 5 Column 1: summary table --> 
