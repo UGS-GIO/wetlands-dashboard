@@ -698,9 +698,7 @@ output$water_map <- renderLeaflet({
 outputOptions(output, "water_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
-observeEvent(input$h2o_param, {
-  req(input$h2o_param)  # Ensure the input exists
-
+observe({
   data <- filtered()
   req(nrow(data) > 0)
 
@@ -1178,9 +1176,7 @@ output$soil_map <- renderLeaflet({
 outputOptions(output, "soil_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
-observeEvent(input$soil_param, {
-  req(input$soil_param)  # Ensure the input exists
-
+observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
 
@@ -1596,9 +1592,7 @@ output$invert_map <- renderLeaflet({
 outputOptions(output, "invert_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
-observeEvent(input$invert_param, {
-  req(input$invert_param)  # Ensure the input exists
-
+observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
 
