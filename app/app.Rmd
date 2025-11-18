@@ -570,9 +570,10 @@ renderUI({
                                'Zinc' = 'Zinc')
   )
   label <- 'Parameter'
-  selectInput('h2o_param', 
-              label = label, 
-              choices = choices)
+  selectInput('h2o_param',
+              label = label,
+              choices = choices,
+              selected = choices[1])
 })
 ```
 
@@ -1081,9 +1082,10 @@ renderUI({
   )
   label <- 'Parameter'
 
-  selectInput('soil_param', 
-              label = label, 
-              choices = choices)
+  selectInput('soil_param',
+              label = label,
+              choices = choices,
+              selected = choices[1])
 })
 ```
 
