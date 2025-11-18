@@ -690,14 +690,16 @@ filtered <-
 # Create base map (renders once)
 output$water_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
-    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+    addProviderTiles(providers$CartoDB.Positron) #basemap
 })
 
 # Update markers reactively using leafletProxy
 observe({
   data <- filtered()
   req(nrow(data) > 0)
+
+  # Calculate bounding box to auto-fit to data
+  bounds <- st_bbox(data)
 
   # Create weight vector (vectorized for performance)
   weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
@@ -714,6 +716,12 @@ observe({
   leafletProxy("water_map", data = data) %>%
     clearMarkers() %>%
     clearControls() %>%
+    fitBounds( # Auto-fit to data bounds
+      lng1 = bounds["xmin"],
+      lat1 = bounds["ymin"],
+      lng2 = bounds["xmax"],
+      lat2 = bounds["ymax"]
+    ) %>%
     addCircleMarkers(
       fillColor = ~fill_pal(value), #map fill color palette
       fillOpacity = 0.8, #markers semi transparent
@@ -1132,14 +1140,16 @@ filtered_soil <- reactive({
 # Create base map (renders once)
 output$soil_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
-    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+    addProviderTiles(providers$CartoDB.Positron) #basemap
 })
 
 # Update markers reactively using leafletProxy
 observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
+
+  # Calculate bounding box to auto-fit to data
+  bounds <- st_bbox(data_soil)
 
   pal <- colorNumeric(
     palette = 'plasma',
@@ -1159,6 +1169,12 @@ observe({
   leafletProxy("soil_map", data = data_soil) %>%
     clearMarkers() %>%
     clearControls() %>%
+    fitBounds( # Auto-fit to data bounds
+      lng1 = bounds["xmin"],
+      lat1 = bounds["ymin"],
+      lng2 = bounds["xmax"],
+      lat2 = bounds["ymax"]
+    ) %>%
     addCircleMarkers(
       fillColor = ~pal(value),
       fillOpacity = 0.8,
@@ -1513,14 +1529,16 @@ filtered_invert <- reactive({
 # Create base map (renders once)
 output$invert_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
-    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+    addProviderTiles(providers$CartoDB.Positron) #basemap
 })
 
 # Update markers reactively using leafletProxy
 observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
+
+  # Calculate bounding box to auto-fit to data
+  bounds <- st_bbox(data_invert)
 
   pal <- colorNumeric( #circle marker color palette
     palette = 'plasma',
@@ -1538,6 +1556,12 @@ observe({
   leafletProxy("invert_map", data = data_invert) %>%
     clearMarkers() %>%
     clearControls() %>%
+    fitBounds( # Auto-fit to data bounds
+      lng1 = bounds["xmin"],
+      lat1 = bounds["ymin"],
+      lng2 = bounds["xmax"],
+      lat2 = bounds["ymax"]
+    ) %>%
     addCircleMarkers(
       fillColor = ~pal(value),
       fillOpacity = 0.8, #transparency
