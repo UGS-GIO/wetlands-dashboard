@@ -642,56 +642,68 @@ Row {data-height=500} <!-- Water Row 3: map -->
 ### Spatial Patterns
 ```{r water map munge}
 #data munge from wq1-wq3
-water <- 
+water <-
   left_join(
     water, #combine water + site_attr (wq3)
-    site_attr %>% 
+    site_attr %>%
       select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`)) %>% #create spatial df
-  filter(!is.na(longitude) & !is.na(latitude)) %>% 
-    st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) %>% 
+  filter(!is.na(longitude) & !is.na(latitude)) %>%
+    st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) %>%
   st_jitter(amount = 0.001)
 
-water <- 
+water <-
   left_join(
     water, #combine water + parameter measures
-    water_param %>% 
+    water_param %>%
       select(parameter, units, label, fraction, acute, chronic))
 
-filtered <- 
-  reactive({
-    req(input$h2o_param) #filter parameter to those in wq1 category
-  water %>% 
-    filter(label == input$h2o_param)
-  })
-
 #remove outliers (z_score >3) for visualization
-water <- 
-  water %>% 
-  group_by(parameter) %>% 
+#IMPORTANT: Do this BEFORE creating the reactive
+water <-
+  water %>%
+  group_by(parameter) %>%
   mutate(
     z_score = (value - mean(value))/sd(value))
 
-outlier_water <- 
+outlier_water <-
   subset(water, z_score > 3)
 
-water <- 
+water <-
   subset(water, z_score <= 3)
 
-water <- 
+water <-
   water %>% select(-z_score)
 
-outlier_water <- 
+outlier_water <-
   outlier_water %>% select(-z_score)
+
+# Now create the reactive after outlier removal
+filtered <-
+  reactive({
+    req(input$h2o_param) #filter parameter to those in wq1 category
+  water %>%
+    filter(label == input$h2o_param)
+  })
 ```
 
 ```{r water map plot}
-### plot data
-renderLeaflet({ #reactive dataset with spatial data only
+# Create base map (renders once)
+output$water_map <- renderLeaflet({
+  leaflet() %>%
+    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
+    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+})
+
+# Update markers reactively using leafletProxy
+observe({
   data <- filtered()
   req(nrow(data) > 0)
 
+  # Create weight vector (vectorized for performance)
+  weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
+
   fill_pal <- #set color palette range based on wq2 selection
-    colorNumeric(palette = 'plasma', domain = data$value, reverse = TRUE) 
+    colorNumeric(palette = 'plasma', domain = data$value, reverse = TRUE)
   outline_pal <- #set outline color and width by fraction
     colorFactor(palette = c('black', 'gray50'), domain = c('filtered', 'unfiltered'))
   chart_info <- #parameter details for labels
@@ -699,30 +711,36 @@ renderLeaflet({ #reactive dataset with spatial data only
   chart_title <- #parameter name + units
     paste0(chart_info$label[1], ' (', chart_info$units[1], ')')
 
-  leaflet(data = data) %>% 
-    addProviderTiles(providers$CartoDB.Positron) %>% #basemap 
+  leafletProxy("water_map", data = data) %>%
+    clearMarkers() %>%
+    clearControls() %>%
     addCircleMarkers(
       fillColor = ~fill_pal(value), #map fill color palette
       fillOpacity = 0.8, #markers semi transparent
-      color = ~outline_pal(fraction), #outline color 
+      color = ~outline_pal(fraction), #outline color
       radius = 8, #marker size
       stroke = TRUE, #marker outline
-      weight = ifelse(data$fraction == 'filtered', 3, 1), #outline width
+      weight = weight_vector, #outline width (now vectorized)
       label = ~paste0(value, ' ', units, ' (', fraction, ')') #hover label value + units + fraction
-      ) %>% 
+      ) %>%
     addLegend( #outline legend
-      colors = c('black', '#7f7f7f'), 
-      opacity = 1, 
+      colors = c('black', '#7f7f7f'),
+      opacity = 1,
       labels = c('Filtered', 'Unfiltered'),
-      position = 'bottomright', 
-      title = 'Sample Type (Outline)') %>%   
+      position = 'bottomright',
+      title = 'Sample Type (Outline)',
+      layerId = "outline_legend") %>%
     addLegend( #fill legend
-      pal = fill_pal, 
-      values = data$value, 
-      position = 'bottomright', 
-      opacity = 1, 
-      title = chart_title)
+      pal = fill_pal,
+      values = data$value,
+      position = 'bottomright',
+      opacity = 1,
+      title = chart_title,
+      layerId = "fill_legend")
 })
+
+# Render the leaflet output
+leafletOutput("water_map")
 ```
 
 Row <!-- Water Row 4: histogram and boxplot --> 
@@ -1111,42 +1129,55 @@ filtered_soil <- reactive({
 ```
 
 ```{r soil map plot}
-renderLeaflet({
+# Create base map (renders once)
+output$soil_map <- renderLeaflet({
+  leaflet() %>%
+    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
+    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+})
+
+# Update markers reactively using leafletProxy
+observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
 
   pal <- colorNumeric(
-    palette = 'plasma', 
-    domain = data_soil$value, 
+    palette = 'plasma',
+    domain = data_soil$value,
     reverse = TRUE)
-  
+
   chart_info_soil <- subset(
-    soil_param, 
+    soil_param,
     parameter == unique(data_soil$parameter))
-  
+
   chart_title_soil <- paste0(
-    chart_info_soil$label[1], 
-    ' (', 
-    chart_info_soil$units[1], 
+    chart_info_soil$label[1],
+    ' (',
+    chart_info_soil$units[1],
     ')')
 
-  leaflet(data = data_soil) %>% 
-    addProviderTiles(providers$CartoDB.Positron) %>% 
+  leafletProxy("soil_map", data = data_soil) %>%
+    clearMarkers() %>%
+    clearControls() %>%
     addCircleMarkers(
-      fillColor = ~pal(value), 
-      fillOpacity = 0.8,  
+      fillColor = ~pal(value),
+      fillOpacity = 0.8,
       radius = 8,
-      color = '#7f7f7f', 
+      color = '#7f7f7f',
       stroke = TRUE,
-      weight = 1, 
-      label = ~paste0(value, ' ', units)) %>% 
+      weight = 1,
+      label = ~paste0(value, ' ', units)) %>%
     addLegend(
-      pal = pal, 
-      values = data_soil$value, 
-      position = 'bottomright', 
-      opacity = 1, 
-      title = chart_title_soil)
+      pal = pal,
+      values = data_soil$value,
+      position = 'bottomright',
+      opacity = 1,
+      title = chart_title_soil,
+      layerId = "soil_legend")
 })
+
+# Render the leaflet output
+leafletOutput("soil_map")
 ```
 
 Row <!-- Section Soil Row 4 - histogram and boxplot --> 
@@ -1475,46 +1506,57 @@ invert_param <- data.frame(#data frame with units
 
 filtered_invert <- reactive({
   req(input$invert_param) #MI1
-  invert_metrics_long %>% 
+  invert_metrics_long %>%
     filter(parameter == input$invert_param)
   })
 
-renderLeaflet({
+# Create base map (renders once)
+output$invert_map <- renderLeaflet({
+  leaflet() %>%
+    addProviderTiles(providers$CartoDB.Positron) %>% #basemap
+    setView(lng = -112.41, lat = 40.38, zoom = 7) # Center over Utah wetlands
+})
+
+# Update markers reactively using leafletProxy
+observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
 
   pal <- colorNumeric( #circle marker color palette
-    palette = 'plasma', 
-    domain = data_invert$value, 
+    palette = 'plasma',
+    domain = data_invert$value,
     reverse = TRUE)
   chart_info_invert <- subset(
-    invert_param, 
+    invert_param,
     parameter == unique(data_invert$parameter))
-  chart_title_invert <- 
-    paste0(chart_info_invert$definition[1], 
-           ' (', 
-           chart_info_invert$units[1], 
+  chart_title_invert <-
+    paste0(chart_info_invert$definition[1],
+           ' (',
+           chart_info_invert$units[1],
            ')')
 
-  leaflet(
-    data = data_invert) %>% 
-    addProviderTiles(
-      providers$CartoDB.Positron) %>% #basemap
+  leafletProxy("invert_map", data = data_invert) %>%
+    clearMarkers() %>%
+    clearControls() %>%
     addCircleMarkers(
-      fillColor = ~pal(value), 
+      fillColor = ~pal(value),
       fillOpacity = 0.8, #transparency
       radius = 8, #size
-      color = '#7f7f7f', #outline 
+      color = '#7f7f7f', #outline
       stroke = TRUE, #outline
       weight = 1, #outline
       label = ~as.character(value)) %>% #popup
     addLegend(
-      pal = pal, 
-      values = data_invert$value, 
-      position = 'bottomright', 
-      opacity = 1, 
-      title = chart_title_invert)
+      pal = pal,
+      values = data_invert$value,
+      position = 'bottomright',
+      opacity = 1,
+      title = chart_title_invert,
+      layerId = "invert_legend")
 })
+
+# Render the leaflet output
+leafletOutput("invert_map")
 ```
 
 Row <!-- Section Invert Row 4: histogram and boxplot --> 
