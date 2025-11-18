@@ -573,7 +573,7 @@ renderUI({
   selectInput('h2o_param',
               label = label,
               choices = choices,
-              selected = choices[1])
+              selected = unname(choices[1]))
 })
 ```
 
@@ -693,9 +693,6 @@ output$water_map <- renderLeaflet({
   leaflet() %>%
     addProviderTiles(providers$CartoDB.Positron) #basemap
 })
-
-# Ensure map renders even when tab is hidden (prevents race condition on tab switch)
-outputOptions(output, "water_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
 observe({
@@ -1088,7 +1085,7 @@ renderUI({
   selectInput('soil_param',
               label = label,
               choices = choices,
-              selected = choices[1])
+              selected = unname(choices[1]))
 })
 ```
 
@@ -1171,9 +1168,6 @@ output$soil_map <- renderLeaflet({
   leaflet() %>%
     addProviderTiles(providers$CartoDB.Positron) #basemap
 })
-
-# Ensure map renders even when tab is hidden (prevents race condition on tab switch)
-outputOptions(output, "soil_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
 observe({
@@ -1587,9 +1581,6 @@ output$invert_map <- renderLeaflet({
   leaflet() %>%
     addProviderTiles(providers$CartoDB.Positron) #basemap
 })
-
-# Ensure map renders even when tab is hidden (prevents race condition on tab switch)
-outputOptions(output, "invert_map", suspendWhenHidden = FALSE)
 
 # Update markers reactively using leafletProxy
 observe({
