@@ -138,6 +138,15 @@ ul li, ol li {
   height: attr(data-height px) !important;
 }
 
+/* Allow chart wrappers to overflow for dropdowns */
+.chart-wrapper {
+  overflow: visible !important;
+}
+
+.chart-stage {
+  overflow: visible !important;
+}
+
 
 /* === HYPERLINK STYLING === */
 a {
@@ -185,37 +194,42 @@ table td {
   color: #FFFFFF;
   border: 1px solid #5E5E5E;   /* Border */
   border-radius: 12px;
-  padding: 5px;
+  padding: 15px;
   margin: 5px 5px 5px 5px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 10px 10px;  /* Optional: space between dropdowns */
+  flex-direction: column;  /* Stack dropdowns vertically */
+  gap: 15px;  /* Space between dropdowns */
   margin-bottom: 20px;
   margin-top: 20px;
   width: 100%;
-  max-width: none; /*was 1100px*/
-  padding: 0;
   box-sizing: border-box;
 }
 
 /* == Dropdown Item == */
 .dropdown-item {
   display: flex;
-  flex: 1 1 200px; 
-  min-width: 100px;
   flex-direction: column; /*stacks label above dropdown */
-  align-items: center; /*center both label and select horizontally */
-  text-align: center;
+  align-items: flex-start; /*align to left */
+  text-align: left;
   margin: 0;
+  width: 100%;
 }
 
-.dropdown-item select {
-  min-width: 100px;
-  max-width: 250px;
-  width: auto;
-  margin-top: 4px;
+.dropdown-item label {
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.dropdown-item select,
+.dropdown-item .selectize-control {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Ensure selectize dropdowns can expand without being cut off */
+.selectize-dropdown {
+  z-index: 1000 !important;
+  position: absolute !important;
 }
 
 /* Optional: remove extra Flexdashboard padding that causes tall rows */
@@ -224,11 +238,11 @@ table td {
   padding-bottom: 0 !important;
 }
 
-/* Responsive breakpoint for wrapping (tweak width as needed) */
+/* Responsive: still stack on small screens */
 @media (max-width: 800px) {
   .dropdown-container {
-    justify-content: center;
-    gap: 8px 20px;
+    padding: 10px;
+    gap: 10px;
   }
 }
 
@@ -325,6 +339,11 @@ table.dataTable.dark-theme tbody tr:hover {
 .download-box {
   padding: 10px;
   margin-bottom: 20px;
+  overflow: visible !important;  /* Allow dropdowns to expand beyond container */
+}
+
+.download-box .selectize-dropdown {
+  z-index: 1001 !important;  /* Ensure dropdown appears above other elements */
 }
 
 /* Style for the download button */
