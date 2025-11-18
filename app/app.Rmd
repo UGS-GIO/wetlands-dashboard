@@ -721,11 +721,16 @@ observe({
     error = function(e) NULL
   )
 
-  # Check if bounds are valid (finite numbers and form a rectangle with area)
+  # Check if bounds are valid:
+  # 1. Not NULL and all finite numbers
+  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
+  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
   if (!is.null(bounds) &&
       all(is.finite(bounds)) &&
       bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"]) {
+      bounds["ymin"] < bounds["ymax"] &&
+      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
+      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
     # Valid bounds - use fitBounds
     map_proxy <- map_proxy %>%
       fitBounds(
@@ -1193,11 +1198,16 @@ observe({
     error = function(e) NULL
   )
 
-  # Check if bounds are valid (finite numbers and form a rectangle with area)
+  # Check if bounds are valid:
+  # 1. Not NULL and all finite numbers
+  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
+  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
   if (!is.null(bounds) &&
       all(is.finite(bounds)) &&
       bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"]) {
+      bounds["ymin"] < bounds["ymax"] &&
+      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
+      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
     # Valid bounds - use fitBounds
     map_proxy <- map_proxy %>%
       fitBounds(
@@ -1599,11 +1609,16 @@ observe({
     error = function(e) NULL
   )
 
-  # Check if bounds are valid (finite numbers and form a rectangle with area)
+  # Check if bounds are valid:
+  # 1. Not NULL and all finite numbers
+  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
+  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
   if (!is.null(bounds) &&
       all(is.finite(bounds)) &&
       bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"]) {
+      bounds["ymin"] < bounds["ymax"] &&
+      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
+      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
     # Valid bounds - use fitBounds
     map_proxy <- map_proxy %>%
       fitBounds(
