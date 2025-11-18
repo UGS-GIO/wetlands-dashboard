@@ -700,6 +700,7 @@ observe({
 
   # Calculate bounding box to auto-fit to data
   bounds <- st_bbox(data)
+  req(all(is.finite(bounds)))  # Ensure bounds are valid numbers
 
   # Create weight vector (vectorized for performance)
   weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
@@ -1150,6 +1151,7 @@ observe({
 
   # Calculate bounding box to auto-fit to data
   bounds <- st_bbox(data_soil)
+  req(all(is.finite(bounds)))  # Ensure bounds are valid numbers
 
   pal <- colorNumeric(
     palette = 'plasma',
@@ -1539,6 +1541,7 @@ observe({
 
   # Calculate bounding box to auto-fit to data
   bounds <- st_bbox(data_invert)
+  req(all(is.finite(bounds)))  # Ensure bounds are valid numbers
 
   pal <- colorNumeric( #circle marker color palette
     palette = 'plasma',
