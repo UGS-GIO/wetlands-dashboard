@@ -732,13 +732,13 @@ observe({
       bounds["ymin"] < bounds["ymax"] &&
       bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
       bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds
+    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
     map_proxy <- map_proxy %>%
       fitBounds(
-        lng1 = bounds["xmin"],
-        lat1 = bounds["ymin"],
-        lng2 = bounds["xmax"],
-        lat2 = bounds["ymax"]
+        lng1 = unname(bounds["xmin"]),
+        lat1 = unname(bounds["ymin"]),
+        lng2 = unname(bounds["xmax"]),
+        lat2 = unname(bounds["ymax"])
       )
   } else {
     # Invalid or zero-area bounds - use default Utah center
@@ -1210,13 +1210,13 @@ observe({
       bounds["ymin"] < bounds["ymax"] &&
       bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
       bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds
+    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
     map_proxy <- map_proxy %>%
       fitBounds(
-        lng1 = bounds["xmin"],
-        lat1 = bounds["ymin"],
-        lng2 = bounds["xmax"],
-        lat2 = bounds["ymax"]
+        lng1 = unname(bounds["xmin"]),
+        lat1 = unname(bounds["ymin"]),
+        lng2 = unname(bounds["xmax"]),
+        lat2 = unname(bounds["ymax"])
       )
   } else {
     # Invalid or zero-area bounds - use default Utah center
@@ -1621,13 +1621,13 @@ observe({
       bounds["ymin"] < bounds["ymax"] &&
       bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
       bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds
+    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
     map_proxy <- map_proxy %>%
       fitBounds(
-        lng1 = bounds["xmin"],
-        lat1 = bounds["ymin"],
-        lng2 = bounds["xmax"],
-        lat2 = bounds["ymax"]
+        lng1 = unname(bounds["xmin"]),
+        lat1 = unname(bounds["ymin"]),
+        lng2 = unname(bounds["xmax"]),
+        lat2 = unname(bounds["ymax"])
       )
   } else {
     # Invalid or zero-area bounds - use default Utah center
