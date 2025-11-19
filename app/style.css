@@ -5,49 +5,55 @@ body {
   font-family: 'Segoe UI', sans-serif/*"Helvetica Neue", Helvetica, Arial, sans-serif;*/
 }
 
+/* === PAGE MARGINS === */
+.dashboard-content {
+  padding-left: 100px !important;
+  padding-right: 100px !important;
+}
+
+/* === ROW SPACING === */
+.section.level2 {
+  margin-bottom: 7px !important;
+}
+
 /* === HEADER (NAVBAR) STYLING === */
 .navbar {
-  background-color: #363636 !important;   /* Header background */
-  border: 1px solid #5E5E5E; /*thin light gray border*/
+  background-color: #1B1B1B !important;   /* Header background same as body*/
+  border: 1px solid transparent; 
   border-radius: 12px; /*rounded border edges*/
   margin: 0, 10px, 0, 10px;
-  /*padding: 10 10px;/* changed padding to 0,0px so that it doesn't have the gap at the top*/
-  /*display: flex; /* new oct 1 broke into two lines */
-  /*align-items: center;*/
-  justify-content: space-between;/* new oct 1 */
-  /*padding-top: 0 10px;*/
-  min-height: 60px;
-  /*font-size 40px; */
-  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px; /*changed from 60*/
+  position: sticky;
+  top: 0; /*stick to top of viewport*/
+  z-index: 1000; 
 }
 
 body{
-  padding-top: 10px !important; /*this line keeps everything flush at the top; needs to be separate from the other body section
+  padding-top: 10px !important; 
 } 
 
 /* === HEADER LOGO + TITLE === */
 .navbar .navbar-brand {
-  display: flex; /* new line */
-  align-items: center; /*new*/
-  gap: 10px; /*new*/
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
   margin: 0;
   padding: 10px;
-  position: relative; /*new oct 1 */
+  position: relative; 
   color: #FFFFFF !important;
   font-weight: bold;
-  font-size: 40px; /*title font height*/
+  font-size: 30px; /*title font height*/
   white-space: nowrap; /* to navbar text wrap */
 }
-
-/*.navbar .navbar-brand img {
-  height: 40px; 
-  width: auto;
-}*/
 
 .navbar-logo img {
   padding-left: 5px;
   padding-right: 5px;
+  cursor: pointer; /*show it's clickable*/
 }
+
 .navbar-nav{
   display: flex; 
   flex-direction:row;
@@ -64,11 +70,9 @@ body{
 .navbar-nav > li > a {
   color:#FFFFFF !important; /*tab font color*/
   padding: 10px 10px;
-  border-bottom: 3px solid transparent; /*setup for current tab and hover tab underline*/
+  border-bottom: 3px solid transparent; /*current tab and hover tab underline*/
   font-weight: 500;
-  font-size: 18px; /*font size for tab names */
-  /*margin-left: auto;/* new oct 1 */
-  /*margin-right: auto;/* new oct 1 */
+  font-size: 18px;
 }
 
 .navbar-nav { 
@@ -80,6 +84,7 @@ body{
 .navbar-nav > .active > a:focus,
 .navbar-nav > .active > a:hover {
   background-color: transparent !important;
+  font-weight: bold;
   border-bottom: 3px solid #E69800;
   color: #FFFFFF !important;
 }
@@ -95,17 +100,16 @@ body{
 /* === SECTION TITLES === */
 h2.section.level2 { 
   color: #E69800;
-  /*border-bottom: 0 solid #5E5E5E;*/
   padding-bottom: 5px;
   margin-bottom: 5px;
 }
 
 /* === ROW STYLING === */
 .section {
-  padding: 5px;   /* keep spacing but no background or border */
+  padding: 5px;   /* keep spacing */
   background: none;
   border: none;
-  margin: 0 5px, 0, 5px;       /* no margin for container rows */
+  margin: 0 5px, 0, 5px; /* no margin for container rows */
 }
 
 .section > .section:not(:has(.section)) {
@@ -113,12 +117,34 @@ h2.section.level2 {
   border: 1px solid #5E5E5E;   /* Border */
   border-radius: 12px;
   padding: 5px;
-  margin: 0 5px 5px 5px;    /* symmetric spacing */
+  margin: 0 5px 5px 5px; /* symmetric spacing */
 }
 
 /* Add spacing only between bullet points */
 ul li, ol li {
   margin-bottom: 0.5em;  /* Adjust value as needed */
+}
+
+/* == row height settings === */
+.chart-stage-flex {
+  flex-basis: auto !important;
+}
+
+.section.level2 {
+  flex-basis: auto !important;
+}
+
+.section.level2[data-height] .chart-wrapper {
+  height: attr(data-height px) !important;
+}
+
+/* Allow chart wrappers to overflow for dropdowns */
+.chart-wrapper {
+  overflow: visible !important;
+}
+
+.chart-stage {
+  overflow: visible !important;
 }
 
 
@@ -156,41 +182,54 @@ table td {
   padding: 15px;
 }
 
-/* === VALUE BOX ICON === */
 .value-box .icon i{
   color: #664300 !important;  /* Set icon color */
   font-size: 80px; /* Optional */
 }
 
 /* === DROPDOWNS === */
+/* == Dropdown Container == */
 .dropdown-container {
+  background-color: #282828;
+  color: #FFFFFF;
+  border: 1px solid #5E5E5E;   /* Border */
+  border-radius: 12px;
+  padding: 15px;
+  margin: 5px 5px 5px 5px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  /*justify-content: space-between; /* or use space-around */
-  gap: 10px 10px;  /* Optional: space between dropdowns */
+  flex-direction: column;  /* Stack dropdowns vertically */
+  gap: 15px;  /* Space between dropdowns */
   margin-bottom: 20px;
-  margin: 10px auto;
+  margin-top: 20px;
   width: 100%;
-  max-width: 1100px;
-  padding: 0;
   box-sizing: border-box;
 }
 
+/* == Dropdown Item == */
 .dropdown-item {
   display: flex;
   flex-direction: column; /*stacks label above dropdown */
-  align-items: center; /*center both label and select horizontally */
-  text-align: center;
+  align-items: flex-start; /*align to left */
+  text-align: left;
   margin: 0;
+  width: 100%;
 }
 
-.dropdown-item select {
-  min-width: 160px;
-  max-width: 250px;
-  width: auto;
-  margin-top: 4px;
+.dropdown-item label {
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.dropdown-item select,
+.dropdown-item .selectize-control {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Ensure selectize dropdowns can expand without being cut off */
+.selectize-dropdown {
+  z-index: 1000 !important;
+  position: absolute !important;
 }
 
 /* Optional: remove extra Flexdashboard padding that causes tall rows */
@@ -199,19 +238,16 @@ table td {
   padding-bottom: 0 !important;
 }
 
-/* Responsive breakpoint for wrapping (tweak width as needed) */
+/* Responsive: still stack on small screens */
 @media (max-width: 800px) {
   .dropdown-container {
-    justify-content: center;
-    gap: 8px 20px;
+    padding: 10px;
+    gap: 10px;
   }
 }
-/*.dropdown-item {
-  flex: 1;  /* Makes each dropdown take equal space */
-/*}*/
 
-/* === Banner image === */
-.banner-image {
+/* === Banner image === */ /*maybe recreate for image image
+/*.banner-image {
   width: 100%;
   height: auto;
   max-height: 400px;
@@ -219,8 +255,8 @@ table td {
   display: block;
   margin: 0 10px 20px 10px;
   border-radius: 12px;
-  /*margin-bottom: 20px;*/
-}
+  /*margin-bottom: 20px;
+}*/
 
 /* Dark theme for DataTable */
 table.dataTable.dark-theme {
@@ -286,11 +322,40 @@ table.dataTable.dark-theme tbody tr:hover {
   box-shadow: none !important;
 }
 
-/* Download button */
+/* dt titles and columns same width */
+<style>
+.dataTables_wrapper table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+.dataTables_wrapper thead th,
+.dataTables_wrapper tbody td {
+  box-sizing: border-box;
+}
+</style>
+
+/* === SUMMARY BOX === */
+.summary-box {
+  padding: 15px;
+  margin: 5px;
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === DOWNLOAD BOX === */
 /* Style container */
 .download-box {
-  padding: 10px;
-  margin-bottom: 20px;
+  padding: 15px;
+  margin: 5px;
+  overflow: visible !important;  /* Allow dropdowns to expand beyond container */
+  height: auto !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.download-box .selectize-dropdown {
+  z-index: 1001 !important;  /* Ensure dropdown appears above other elements */
 }
 
 /* Style for the download button */
@@ -309,36 +374,45 @@ table.dataTable.dark-theme tbody tr:hover {
   color: #000;
 }
 
-/* Optional: style select input */
-/*select.form-control {
-  background-color: #eee;
-  color: #000;
-  border-radius: 4px;
-}
-
 /* === FLEX CONTAINERS FOR IMAGE + CAPTION === */
-/* Caption below knitr images */
-.figure {
+/* Caption below images */
+.figure { 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  background-color: #282828 !important;
 }
 
-.figure img {
-  border: 2px solid #ccc;      /* border around image */
-  border-radius: 12px;          /* rounded corners */
-  max-height: 80vh;            /* scale image to viewport height */
-  width: auto;                 /* maintain aspect ratio */
-}
-/* Optional: caption text styling */
+/*caption - didn't work*/
 .figure .caption {
-  background-color: #2a2a2a;
-  color: #fff;
-  font-size: 14px;
+  background-color = #282828 !important;
+  font-size: 14 px !important;
+}
+
+/* === FOOTER STYLING === */
+.custom-footer {
+  background-color: #1B1B1B;
+  color: #FFFFFF;
   text-align: center;
-  padding: 6px 10px;
-  margin-top: 4px;
-  border-radius: 0 0 6px 6px;
-  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 50px;
+  margin-bottom: 20px;
+  width: calc(100% - 200px); /* Account for 100px margins on each side */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.custom-footer a {
+  color: #e6951c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.custom-footer a:hover {
+  color: #e6951c;
+  text-decoration: underline;
 }

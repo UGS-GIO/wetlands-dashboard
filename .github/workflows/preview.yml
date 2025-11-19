@@ -60,9 +60,9 @@ jobs:
             --region=${{ env.REGION }} \
             --port=8080 \
             --memory=2Gi \
-            --cpu=1 \
+            --cpu=2 \
             --timeout=3600 \
-            --max-instances=3 \
+            --max-instances=10 \
             --update-labels=preview=true,current-pr=${{ github.event.number }},current-branch=${BRANCH_LABEL}
 
       - name: Get Preview URL
