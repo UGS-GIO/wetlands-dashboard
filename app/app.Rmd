@@ -691,7 +691,8 @@ filtered <-
 # Create base map (renders once)
 output$water_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) #basemap
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
 })
 
 # Update markers reactively using leafletProxy
@@ -702,74 +703,60 @@ observe({
   # Create weight vector (vectorized for performance)
   weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
 
-  fill_pal <- #set color palette range based on wq2 selection
+  fill_pal <- 
     colorNumeric(palette = 'plasma', domain = data$value, reverse = TRUE)
-  outline_pal <- #set outline color and width by fraction
+  outline_pal <- 
     colorFactor(palette = c('black', 'gray50'), domain = c('filtered', 'unfiltered'))
-  chart_info <- #parameter details for labels
+  chart_info <- 
     subset(water_param, parameter == unique(data$parameter))
-  chart_title <- #parameter name + units
+  chart_title <- 
     paste0(chart_info$label[1], ' (', chart_info$units[1], ')')
 
-  # Start leaflet proxy with base operations
-  map_proxy <- leafletProxy("water_map", data = data) %>%
+  # Clear and update map
+  leafletProxy("water_map", data = data) %>%
     clearMarkers() %>%
-    clearControls()
-
-  # Try to calculate and use bounds, with fallback to default center
-  bounds <- tryCatch(
-    st_bbox(data),
-    error = function(e) NULL
-  )
-
-  # Check if bounds are valid:
-  # 1. Not NULL and all finite numbers
-  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
-  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
-  if (!is.null(bounds) &&
-      all(is.finite(bounds)) &&
-      bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"] &&
-      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
-      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
-    map_proxy <- map_proxy %>%
-      fitBounds(
-        lng1 = unname(bounds["xmin"]),
-        lat1 = unname(bounds["ymin"]),
-        lng2 = unname(bounds["xmax"]),
-        lat2 = unname(bounds["ymax"])
-      )
-  } else {
-    # Invalid or zero-area bounds - use default Utah center
-    map_proxy <- map_proxy %>%
-      setView(lng = -112.41, lat = 40.38, zoom = 7)
-  }
-
-  map_proxy %>%
+    clearControls() %>%
     addCircleMarkers(
-      fillColor = ~fill_pal(value), #map fill color palette
-      fillOpacity = 0.8, #markers semi transparent
-      color = ~outline_pal(fraction), #outline color
-      radius = 8, #marker size
-      stroke = TRUE, #marker outline
-      weight = weight_vector, #outline width (now vectorized)
-      label = ~paste0(value, ' ', units, ' (', fraction, ')') #hover label value + units + fraction
-      ) %>%
-    addLegend( #outline legend
+      fillColor = ~fill_pal(value),
+      fillOpacity = 0.8,
+      color = ~outline_pal(fraction),
+      radius = 8,
+      stroke = TRUE,
+      weight = weight_vector,
+      label = ~paste0(value, ' ', units, ' (', fraction, ')')
+    ) %>%
+    addLegend(
       colors = c('black', '#7f7f7f'),
       opacity = 1,
       labels = c('Filtered', 'Unfiltered'),
       position = 'bottomright',
       title = 'Sample Type (Outline)',
-      layerId = "outline_legend") %>%
-    addLegend( #fill legend
+      layerId = "outline_legend"
+    ) %>%
+    addLegend(
       pal = fill_pal,
       values = data$value,
       position = 'bottomright',
       opacity = 1,
       title = chart_title,
-      layerId = "fill_legend")
+      layerId = "fill_legend"
+    ) %>%
+    {
+      # Calculate bounds and apply fitBounds
+      bounds <- st_bbox(data)
+      if (all(is.finite(bounds)) && 
+          bounds["xmin"] < bounds["xmax"] && 
+          bounds["ymin"] < bounds["ymax"]) {
+        fitBounds(., 
+          lng1 = unname(bounds["xmin"]),
+          lat1 = unname(bounds["ymin"]),
+          lng2 = unname(bounds["xmax"]),
+          lat2 = unname(bounds["ymax"]),
+          options = list(padding = c(50, 50)))
+      } else {
+        .  # Return unchanged if bounds invalid
+      }
+    }
 })
 
 # Render the leaflet output
@@ -1166,7 +1153,8 @@ filtered_soil <- reactive({
 # Create base map (renders once)
 output$soil_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) #basemap
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
 })
 
 # Update markers reactively using leafletProxy
@@ -1189,42 +1177,10 @@ observe({
     chart_info_soil$units[1],
     ')')
 
-  # Start leaflet proxy with base operations
-  map_proxy <- leafletProxy("soil_map", data = data_soil) %>%
+  # Clear and update map
+  leafletProxy("soil_map", data = data_soil) %>%
     clearMarkers() %>%
-    clearControls()
-
-  # Try to calculate and use bounds, with fallback to default center
-  bounds <- tryCatch(
-    st_bbox(data_soil),
-    error = function(e) NULL
-  )
-
-  # Check if bounds are valid:
-  # 1. Not NULL and all finite numbers
-  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
-  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
-  if (!is.null(bounds) &&
-      all(is.finite(bounds)) &&
-      bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"] &&
-      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
-      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
-    map_proxy <- map_proxy %>%
-      fitBounds(
-        lng1 = unname(bounds["xmin"]),
-        lat1 = unname(bounds["ymin"]),
-        lng2 = unname(bounds["xmax"]),
-        lat2 = unname(bounds["ymax"])
-      )
-  } else {
-    # Invalid or zero-area bounds - use default Utah center
-    map_proxy <- map_proxy %>%
-      setView(lng = -112.41, lat = 40.38, zoom = 7)
-  }
-
-  map_proxy %>%
+    clearControls() %>%
     addCircleMarkers(
       fillColor = ~pal(value),
       fillOpacity = 0.8,
@@ -1232,14 +1188,32 @@ observe({
       color = '#7f7f7f',
       stroke = TRUE,
       weight = 1,
-      label = ~paste0(value, ' ', units)) %>%
+      label = ~paste0(value, ' ', units)
+    ) %>%
     addLegend(
       pal = pal,
       values = data_soil$value,
       position = 'bottomright',
       opacity = 1,
       title = chart_title_soil,
-      layerId = "soil_legend")
+      layerId = "soil_legend"
+    ) %>%
+    {
+      # Calculate bounds and apply fitBounds
+      bounds <- st_bbox(data_soil)
+      if (all(is.finite(bounds)) && 
+          bounds["xmin"] < bounds["xmax"] && 
+          bounds["ymin"] < bounds["ymax"]) {
+        fitBounds(., 
+          lng1 = unname(bounds["xmin"]),
+          lat1 = unname(bounds["ymin"]),
+          lng2 = unname(bounds["xmax"]),
+          lat2 = unname(bounds["ymax"]),
+          options = list(padding = c(50, 50)))
+      } else {
+        .  # Return unchanged if bounds invalid
+      }
+    }
 })
 
 # Render the leaflet output
@@ -1576,12 +1550,13 @@ filtered_invert <- reactive({
   req(input$invert_param) #MI1
   invert_metrics_long %>%
     filter(parameter == input$invert_param)
-  })
+})
 
 # Create base map (renders once)
 output$invert_map <- renderLeaflet({
   leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) #basemap
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
 })
 
 # Update markers reactively using leafletProxy
@@ -1593,51 +1568,21 @@ observe({
     palette = 'plasma',
     domain = data_invert$value,
     reverse = TRUE)
+  
   chart_info_invert <- subset(
     invert_param,
     parameter == unique(data_invert$parameter))
+  
   chart_title_invert <-
     paste0(chart_info_invert$definition[1],
            ' (',
            chart_info_invert$units[1],
            ')')
 
-  # Start leaflet proxy with base operations
-  map_proxy <- leafletProxy("invert_map", data = data_invert) %>%
+  # Clear and update map
+  leafletProxy("invert_map", data = data_invert) %>%
     clearMarkers() %>%
-    clearControls()
-
-  # Try to calculate and use bounds, with fallback to default center
-  bounds <- tryCatch(
-    st_bbox(data_invert),
-    error = function(e) NULL
-  )
-
-  # Check if bounds are valid:
-  # 1. Not NULL and all finite numbers
-  # 2. Form a rectangle with area (xmin < xmax, ymin < ymax)
-  # 3. Within valid lat/lng ranges (lat: -90 to 90, lng: -180 to 180)
-  if (!is.null(bounds) &&
-      all(is.finite(bounds)) &&
-      bounds["xmin"] < bounds["xmax"] &&
-      bounds["ymin"] < bounds["ymax"] &&
-      bounds["ymin"] >= -90 && bounds["ymax"] <= 90 &&
-      bounds["xmin"] >= -180 && bounds["xmax"] <= 180) {
-    # Valid bounds - use fitBounds (unname to avoid JSON serialization issues)
-    map_proxy <- map_proxy %>%
-      fitBounds(
-        lng1 = unname(bounds["xmin"]),
-        lat1 = unname(bounds["ymin"]),
-        lng2 = unname(bounds["xmax"]),
-        lat2 = unname(bounds["ymax"])
-      )
-  } else {
-    # Invalid or zero-area bounds - use default Utah center
-    map_proxy <- map_proxy %>%
-      setView(lng = -112.41, lat = 40.38, zoom = 7)
-  }
-
-  map_proxy %>%
+    clearControls() %>%
     addCircleMarkers(
       fillColor = ~pal(value),
       fillOpacity = 0.8, #transparency
@@ -1645,14 +1590,32 @@ observe({
       color = '#7f7f7f', #outline
       stroke = TRUE, #outline
       weight = 1, #outline
-      label = ~as.character(value)) %>% #popup
+      label = ~as.character(value)
+    ) %>%
     addLegend(
       pal = pal,
       values = data_invert$value,
       position = 'bottomright',
       opacity = 1,
       title = chart_title_invert,
-      layerId = "invert_legend")
+      layerId = "invert_legend"
+    ) %>%
+    {
+      # Calculate bounds and apply fitBounds
+      bounds <- st_bbox(data_invert)
+      if (all(is.finite(bounds)) && 
+          bounds["xmin"] < bounds["xmax"] && 
+          bounds["ymin"] < bounds["ymax"]) {
+        fitBounds(., 
+          lng1 = unname(bounds["xmin"]),
+          lat1 = unname(bounds["ymin"]),
+          lng2 = unname(bounds["xmax"]),
+          lat2 = unname(bounds["ymax"]),
+          options = list(padding = c(50, 50)))
+      } else {
+        .  # Return unchanged if bounds invalid
+      }
+    }
 })
 
 # Render the leaflet output
