@@ -19,7 +19,7 @@ body {
 /* === HEADER (NAVBAR) STYLING === */
 .navbar {
   background-color: #1B1B1B !important;   /* Header background same as body*/
-  border: 1px solid transparent; 
+  border: 1px solid transparent;
   border-radius: 12px; /*rounded border edges*/
   margin: 0, 10px, 0, 10px;
   align-items: center;
@@ -27,7 +27,7 @@ body {
   min-height: 30px; /*changed from 60*/
   position: sticky;
   top: 0; /*stick to top of viewport*/
-  z-index: 1000; 
+  z-index: 2000; /* Higher than Leaflet legend (1000) */
 }
 
 body{
@@ -120,6 +120,27 @@ h2.section.level2 {
   margin: 0 5px 5px 5px; /* symmetric spacing */
 }
 
+/* Make columns in a row equal height */
+.section.level2 {
+  display: flex;
+  align-items: stretch;
+}
+
+.section.level2 > .section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section.level2 > .section > .chart-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section.level2 > .section > .chart-wrapper > .chart-stage {
+  flex: 1;
+}
+
 /* Add spacing only between bullet points */
 ul li, ol li {
   margin-bottom: 0.5em;  /* Adjust value as needed */
@@ -195,14 +216,13 @@ table td {
   border: 1px solid #5E5E5E;   /* Border */
   border-radius: 12px;
   padding: 15px;
-  margin: 5px 5px 5px 5px;
+  margin: 0 5px 5px 5px;  /* No top margin to align with sibling panel */
   display: flex;
   flex-direction: column;  /* Stack dropdowns vertically */
   gap: 15px;  /* Space between dropdowns */
-  margin-bottom: 20px;
-  margin-top: 20px;
-  width: 100%;
   box-sizing: border-box;
+  flex: 1;  /* Stretch to fill available height */
+  align-self: stretch;
 }
 
 /* == Dropdown Item == */
@@ -338,9 +358,68 @@ table.dataTable.dark-theme tbody tr:hover {
 .summary-box {
   padding: 15px;
   margin: 5px;
-  height: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
   display: flex;
   flex-direction: column;
+  overflow-y: auto !important;
+  box-sizing: border-box;
+}
+
+/* Summary table scrolling */
+.summary-box .dataTables_wrapper {
+  overflow: auto;
+  height: 100%;
+}
+
+/* Override fixed row height for rows containing summary tables */
+.section.level2:has(.summary-box) {
+  height: 50vh !important;
+  min-height: 300px !important;
+  max-height: 500px !important;
+  display: flex !important;
+  align-items: stretch !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+}
+
+/* Make both columns in summary row stretch vertically but keep original widths */
+.section.level2:has(.summary-box) > .section.level3 {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;  /* Equal width columns */
+  overflow: hidden;
+}
+
+/* Override inline flex styles on chart-wrapper */
+.section.level2:has(.summary-box) .chart-wrapper {
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+.section.level2:has(.summary-box) .chart-stage {
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+.section.level2:has(.summary-box) .chart-shim {
+  height: 100% !important;
+  overflow: hidden !important;
+  flex: 1 !important;
+}
+
+/* Make download-box fill available space */
+.section.level2:has(.summary-box) .download-box {
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* === DOWNLOAD BOX === */
@@ -349,7 +428,7 @@ table.dataTable.dark-theme tbody tr:hover {
   padding: 15px;
   margin: 5px;
   overflow: visible !important;  /* Allow dropdowns to expand beyond container */
-  height: auto !important;
+  flex: 1;
   display: flex;
   flex-direction: column;
 }
@@ -376,19 +455,45 @@ table.dataTable.dark-theme tbody tr:hover {
 
 /* === FLEX CONTAINERS FOR IMAGE + CAPTION === */
 /* Caption below images */
-.figure { 
+.figure {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 8px;
   background-color: #282828 !important;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  max-height: 100%;
 }
 
-/*caption - didn't work*/
-.figure .caption {
-  background-color = #282828 !important;
-  font-size: 14 px !important;
+.figure img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  display: block;
+}
+
+/* General image rounding */
+img {
+  border-radius: 8px;
+}
+
+/* Caption styling - note: class name has literal dot */
+p.figure\.caption,
+.figure > p {
+  background-color: #282828;
+  color: #FFFFFF;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0 0 8px 8px;
 }
 
 /* === FOOTER STYLING === */
@@ -415,4 +520,9 @@ table.dataTable.dark-theme tbody tr:hover {
 .custom-footer a:hover {
   color: #e6951c;
   text-decoration: underline;
+}
+
+/* === LEAFLET MAP STYLING === */
+.leaflet-container {
+  border-radius: 6px;
 }

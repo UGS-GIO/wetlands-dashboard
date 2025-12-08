@@ -6,6 +6,8 @@ output:
     vertical_layout: scroll
     css: style.css
     logo: UGS-logo-large.png
+    includes:
+      in_header: header.html
 runtime: shiny
 ---
 
@@ -21,6 +23,8 @@ library(ggplot2)
 library(sf)
 library(scales)
 library(DT)
+library(stringr)
+
 
 # API Configuration
 API_BASE_URL <- "https://postgrest-seamlessgeolmap-734948684426.us-central1.run.app"
@@ -205,6 +209,26 @@ site_attr$project <- ifelse(site_attr$project %in% ugs_studies, 'Utah Geological
 site_attr$project <- ifelse(site_attr$project %in% usu_studies, 'Utah State University', site_attr$project)
 ```
 
+```{r tab change handler}
+# Invalidate Leaflet map size when switching tabs
+# This fixes maps losing their bounds when hidden and re-shown
+observeEvent(input$active_tab, {
+  tab <- input$active_tab
+
+  # Map each tab to its corresponding leaflet map ID
+  map_id <- switch(tab,
+    "#section-water-chemistry" = "water_map",
+    "#section-soil-chemistry" = "soil_map",
+    "#section-macroinvertebrates" = "invert_map",
+    NULL
+  )
+
+  if (!is.null(map_id)) {
+    session$sendCustomMessage("invalidateLeafletMap", map_id)
+  }
+})
+```
+
 ```{r dark theme for ggplot}
 #for all ggplot figures (histogram, boxplot, barplot)
 theme_ugsdark <- function() {
@@ -217,7 +241,7 @@ theme_ugsdark <- function() {
         color = "#ffffff"
       ),
       axis.title = element_text(
-        size = 14, 
+        size = 14,
         color = '#ffffff'
       ),
       strip.text = element_text(size = 14, 
@@ -228,9 +252,10 @@ theme_ugsdark <- function() {
       plot.background = element_rect(fill = '#282828'),
     panel.background = element_rect(fill = '#282828'), 
     plot.caption = element_text(
-      color = '#FFFFFF', 
-      size = 14, face = 'bold', 
-      hjust = 0, vjust = -0.5), 
+      color = '#FFFFFF',
+      size = 14, face = 'bold',
+      hjust = 0.5),
+    plot.margin = margin(10, 15, 10, 35),
     legend.title = element_text(color = '#FFFFFF'), 
     legend.text = element_text(color = '#FFFFFF', 
                                size = 13), 
@@ -726,20 +751,20 @@ observe({
       label = ~paste0(value, ' ', units, ' (', fraction, ')')
     ) %>%
     addLegend(
-      colors = c('black', '#7f7f7f'),
-      opacity = 1,
-      labels = c('Filtered', 'Unfiltered'),
-      position = 'bottomright',
-      title = 'Sample Type (Outline)',
-      layerId = "outline_legend"
-    ) %>%
-    addLegend(
       pal = fill_pal,
       values = data$value,
       position = 'bottomright',
       opacity = 1,
       title = chart_title,
       layerId = "fill_legend"
+    ) %>%
+    addLegend(
+      colors = c('black', '#7f7f7f'),
+      opacity = 1,
+      labels = c('Filtered', 'Unfiltered'),
+      position = 'bottomright',
+      title = 'Sample Type (Outline)',
+      layerId = "outline_legend"
     ) %>%
     {
       # Calculate bounds and apply fitBounds
@@ -763,9 +788,9 @@ observe({
 leafletOutput("water_map")
 ```
 
-Row <!-- Water Row 4: histogram and boxplot --> 
+Row <!-- Water Row 4: histogram and boxplot -->
 ---------------------------------------------
-### Parameter Distribution
+### Parameter Distribution {data-width=550}
 <!-- Water Row 4 Column 1: histogram --> 
 ```{r water histogram}
 sample_labs <- c(filtered = 'Filtered', #facet plot labels
@@ -801,11 +826,11 @@ renderPlot({
       linetype = 'dashed', 
       color = '#FFFFFF') + 
     labs(x = chart_title, #x axis label
-           y = 'Frequency', 
-         caption = paste0('Distribution of ', 
-                          chart_caption, 
-                          ' observations shaded by ', 
-                          input$subpop)) + #y axis label
+           y = 'Frequency',
+         caption = str_wrap(paste0('Distribution of ',
+                          chart_caption,
+                          ' observations shaded by ',
+                          input$subpop), width = 50)) + #y axis label
     coord_flip() + #flip from vertical to horizontal
     facet_wrap(
       ~fraction, #separate plots for filtered & unfiltered
@@ -816,8 +841,8 @@ renderPlot({
     })
 ```
 
-### Group Comparison
-<!-- Water Row 4 Column 2: box plot --> 
+### Group Comparison {data-width=550}
+<!-- Water Row 4 Column 2: box plot -->
 ```{r water boxplot}
 renderPlot({
   req(subpop()) #wq3
@@ -827,45 +852,52 @@ renderPlot({
   chart_title <- #labels parameter + units
     paste0(chart_info$label[1], ' (', chart_info$units[1], ')')
   chart_caption <- chart_info$label[1]
-   chart_acute <- chart_info$acute[1] #wqs criteria line
-  
-    ggplot(data_box, #wq2 + wq3 data for boxplot
-      aes(x = subpop, 
-          y = value, 
-          fill = subpop)) + 
-      geom_boxplot(alpha = 0.9, 
-                   color = '#dedeDe') + 
-      geom_jitter(width = 0.1, 
-                  alpha = 0.8, 
-                  color = '#dEdEdE') + 
-      scale_fill_brewer(palette = 'PuOr', 
-                        name = NULL) + 
+  chart_acute <- chart_info$acute[1] #wqs criteria line
+
+  ggplot(data_box, #wq2 + wq3 data for boxplot
+      aes(x = subpop,
+          y = value,
+          fill = subpop)) +
+      geom_boxplot(alpha = 0.9,
+                   color = '#dedeDe') +
+      geom_jitter(width = 0.1,
+                  alpha = 0.8,
+                  color = '#dEdEdE') +
+      scale_fill_brewer(palette = 'PuOr',
+                        name = NULL) +
       guides(fill = 'none', shape = 'none') +
       geom_hline(yintercept = chart_acute, #wq criteria
-        linetype = 'dashed', 
-        color = '#FFFFFF') + 
-      labs(x = NULL, 
-           y = chart_title, 
-           caption = paste0('Boxplot (25-75th percentile) of ', 
-                          chart_caption, 
-                          ' across ', 
-                          input$subpop, 's')) + 
+        linetype = 'dashed',
+        color = '#FFFFFF') +
+      labs(x = NULL,
+           y = chart_title,
+           caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
+                          chart_caption,
+                          ' across ',
+                          input$subpop, 's'), width = 50)) +
       scale_x_discrete(
-        labels = function(x){sub('\\s', '\n', x)}) + 
-      scale_y_continuous(label = comma) + 
+        labels = function(x) str_wrap(x, width = 12)) +
+      scale_y_continuous(label = comma) +
       theme_ugsdark()
-  })
+})
 ```
 
-Row {data-height=500} <!-- Water Row 5: summary and download -->
+Row {data-height=650} <!-- Water Row 5: summary and download -->
 --------------------------------------------
-### Summary
+### Summary {data-width=500}
 
 <!-- Water Row 5 Column 1: summary table -->
 ```{r water summary table}
 div(class = "summary-box",
 renderDataTable({
-  table_df <- subpop() %>%
+  data <- subpop()
+  # Get units for current parameter
+  param_info <- subset(water_param, parameter == unique(data$parameter))
+  # Replace 'u' with proper micro symbol 'µ' for units like uS/cm
+  units_clean <- gsub("^u", "µ", param_info$units[1])
+  units_label <- paste0("(", units_clean, ")")
+
+  table_df <- data %>%
     st_drop_geometry() %>%
     group_by(subpop) %>%
       summarise(
@@ -877,26 +909,36 @@ renderDataTable({
         .groups = 'drop'
       ) %>%
     mutate(across(where(is.numeric), ~signif(., 2))) %>%
-    rename(Group = subpop) %>%
-    select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
+    rename(Group = subpop)
+
+  # Rename columns to include units
+  colnames(table_df) <- c("Group", "Sample Size",
+                          paste("Min", units_label),
+                          paste("Median", units_label),
+                          paste("Mean", units_label),
+                          paste("Max", units_label))
 
   datatable(table_df,
     rownames = FALSE,
     class = 'compact dark-theme',
+    fillContainer = TRUE,
     options = list(
-      dom = 'ft',
+      dom = 't',
       ordering = FALSE,
-      autoWidth = FALSE,
+      paging = FALSE,
+      searching = FALSE,
+      info = FALSE,
+      scrollY = 'calc(50vh - 150px)',
+      scrollCollapse = TRUE,
       columnDefs = list(
         list(className = 'dt-center', targets = '_all')
-        )
-    )) %>%
-    formatStyle(columns = 0:5, width = '150px')
+      )
+    ))
 })
 )
 ```
 
-### Download Water Data 
+### Download Water Data {data-width=500}
 <!-- Water Row 5 Column 2: download data --> 
 ```{r water download}
 water <- rbind(water, outlier_water)
@@ -1256,11 +1298,11 @@ renderPlot({
                       name = NULL) + 
     scale_x_continuous(label = scales::comma) + 
     labs(x = chart_title_soil,
-         y = 'Frequency', 
-         caption = paste0('Distribution of ', 
-                          chart_caption, 
-                          ' observations shaded by ', 
-                          input$subpop_soil)) + 
+         y = 'Frequency',
+         caption = str_wrap(paste0('Distribution of ',
+                          chart_caption,
+                          ' observations shaded by ',
+                          input$subpop_soil), width = 50)) + 
     coord_flip() + 
     theme_ugsdark() + 
     theme(legend.position = 'inside', 
@@ -1292,12 +1334,12 @@ renderPlot({
     geom_jitter(width = 0.1, alpha = 0.8, color = '#d3d3d3') + 
     scale_fill_brewer(palette = 'PuOr') + 
     guides(fill = 'none') + 
-    labs(x = '', 
-         y = chart_title_soil, 
-         caption = paste0('Boxplot (25-75th percentile) of ', 
-                          chart_caption, 
-                          ' across ', 
-                          input$subpop_soil, 's')) + 
+    labs(x = '',
+         y = chart_title_soil,
+         caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
+                          chart_caption,
+                          ' across ',
+                          input$subpop_soil, 's'), width = 50)) + 
     scale_x_discrete(
       labels = function(x){sub('\\s', '\n', x)}) + 
     scale_y_continuous(label = comma) + 
@@ -1305,9 +1347,9 @@ renderPlot({
   })
 ```
 
-Row {data-height=500} <!-- Section Soil Row 5 - summary & download --> 
+Row {data-height=650} <!-- Section Soil Row 5 - summary & download -->
 ---------------------------------------
-### Summary
+### Summary {data-width=500}
 <!-- Soil Row 5 Column 1 - summary table -->
 
 ```{r soil table}
@@ -1334,10 +1376,13 @@ renderDataTable({
   datatable(table_df_soil,
     rownames = FALSE,
     class = 'compact dark-theme',
+    fillContainer = FALSE,
     options = list(
-      dom = 'ft',
+      dom = 't',
       ordering = FALSE,
-      autowidth = FALSE,
+      paging = FALSE,
+      searching = FALSE,
+      info = FALSE,
       columnDefs = list(list(className = 'dt-center', targets = '_all'))
     ))
 })
@@ -1345,7 +1390,7 @@ renderDataTable({
 ```
 
 
-### Download Soil Data 
+### Download Soil Data {data-width=500}
 <!-- Soil Row 5 Column 2 - download soil data --> 
 ```{r download soil}
 for_download_soil <- left_join(
@@ -1658,11 +1703,11 @@ renderPlot({
                       name = NULL) + 
     scale_x_continuous(label = scales::comma) + 
     labs(x = chart_title_invert,
-          y = 'Frequency', 
-          caption = paste0('Distribution of ', 
-                           chart_caption_invert, 
-                          ' observations \nshaded by ', 
-                          input$subpop_invert)) + 
+          y = 'Frequency',
+          caption = str_wrap(paste0('Distribution of ',
+                           chart_caption_invert,
+                          ' observations shaded by ',
+                          input$subpop_invert), width = 50)) + 
     coord_flip() + 
     theme_ugsdark() + 
     theme(legend.position = 'inside', 
@@ -1695,21 +1740,21 @@ renderPlot({
                   color = '#d5d5d5') + 
       scale_fill_brewer(palette = 'PuOr', name = NULL) + 
       guides(fill = 'none') +
-      labs(x = '', 
-           y = chart_title_invert, 
-           caption = paste0('Boxplot (25-75th percentile) of ', 
-                          chart_caption_invert, 
-                          ' across\n', 
-                          input$subpop_invert, 's')) + 
+      labs(x = '',
+           y = chart_title_invert,
+           caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
+                          chart_caption_invert,
+                          ' across ',
+                          input$subpop_invert, 's'), width = 50)) + 
       scale_x_discrete(labels = function(x){sub('\\s', '\n', x)}) + 
       scale_y_continuous(label = comma) + 
       theme_ugsdark()
   })
 ```
 
-Row {data-height=500} <!-- Section Invert Row 5: summary and download --> 
+Row {data-height=650} <!-- Section Invert Row 5: summary and download -->
 ---------------------------------------
-### Summary
+### Summary {data-width=500}
 <!-- Section Invert Row 5 Column 1: summary table -->
 ```{r invert table}
 div(class = "summary-box",
@@ -1734,19 +1779,21 @@ renderDataTable({
   datatable(table_df_invert,
             rownames = FALSE,
             class = 'compact dark-theme',
+            fillContainer = FALSE,
             options = list(
-              dom = 'ft',
+              dom = 't',
               ordering = FALSE,
-              autowidth = FALSE,
+              paging = FALSE,
+              searching = FALSE,
+              info = FALSE,
               columnDefs = list(
-                list(
-                  className = 'dt-center', targets = '_all'))
-              ))
+                list(className = 'dt-center', targets = '_all'))
+            ))
   })
 )
 ```
 
-### Download Macroinvertebrate Data
+### Download Macroinvertebrate Data {data-width=500}
 <!-- Section Invert Row 5 Column 2: download data --> 
 ```{r invert download}
 for_download_invert <- pivot_wider( #long data to wide
@@ -2005,10 +2052,10 @@ renderPlot({ #create stacked barplot of IC1 x IC2
               color = '#d3d3d3') +
      scale_fill_brewer(palette = 'BrBG', 
                        name = NULL) +
-     labs(x = NULL, 
-          y = 'Relative Abundance (%)', 
-          caption = paste0('Mean relative abundance of macroinvertebrate \ncommunity types across ', 
-                             input$subpop_comm)) + 
+     labs(x = NULL,
+          y = 'Relative Abundance (%)',
+          caption = str_wrap(paste0('Mean relative abundance of macroinvertebrate community types across ',
+                             input$subpop_comm), width = 50)) + 
      scale_x_discrete(
        labels = function(x){sub('\\s', '\n', x)}) +
      theme_ugsdark()
