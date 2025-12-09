@@ -763,9 +763,7 @@ renderDataTable({
   data <- subpop()
   # Get units for current parameter
   param_info <- subset(water_param, parameter == unique(data$parameter))
-  # Replace 'u' with proper micro symbol 'µ' for units like uS/cm
-  units_clean <- gsub("^u", "µ", param_info$units[1])
-  units_label <- paste0("(", units_clean, ")")
+  units_label <- paste0("(", param_info$units[1], ")")
 
   table_df <- data %>%
     st_drop_geometry() %>%
