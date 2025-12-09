@@ -343,7 +343,6 @@ table.dataTable.dark-theme tbody tr:hover {
 }
 
 /* dt titles and columns same width */
-<style>
 .dataTables_wrapper table {
   table-layout: fixed !important;
   width: 100% !important;
@@ -352,7 +351,6 @@ table.dataTable.dark-theme tbody tr:hover {
 .dataTables_wrapper tbody td {
   box-sizing: border-box;
 }
-</style>
 
 /* === SUMMARY BOX === */
 .summary-box {

@@ -12,7 +12,7 @@ runtime: shiny
 ---
 
 ```{r setup}
-#R packages required for visualizations
+# R packages required for visualizations
 library(shiny)
 library(flexdashboard)
 library(fontawesome)
@@ -24,85 +24,17 @@ library(sf)
 library(scales)
 library(DT)
 library(stringr)
+library(httr)
+library(jsonlite)
 
+# Source helper functions
+source("R/data.R")
+source("R/theme.R")
+source("R/maps.R")
+source("R/charts.R")
+source("R/tables.R")
 
-# API Configuration
-API_BASE_URL <- "https://postgrest-seamlessgeolmap-734948684426.us-central1.run.app"
-API_SCHEMA <- "wetlands"
-
-# Cache environment for storing API responses
-api_cache <- new.env()
-
-# Function to fetch data from PostgREST API with fallback to CSV
-fetch_data <- function(table_name, csv_filename = NULL) {
-  # Check cache first
-  cache_key <- paste0("wetdash_", table_name)
-  if (exists(cache_key, envir = api_cache)) {
-    # Silent caching - no message
-    return(get(cache_key, envir = api_cache))
-  }
-  
-  # Try API first
-  tryCatch({
-    url <- paste0(API_BASE_URL, "/wetdash_", table_name)
-    
-    response <- GET(
-      url,
-      add_headers("Accept-Profile" = API_SCHEMA),
-      timeout(30)
-    )
-    
-    status <- status_code(response)
-    
-    if (status == 200) {
-      # Silent success - no message
-      data <- fromJSON(content(response, "text", encoding = "UTF-8"))
-      
-      # Convert to data frame if it's a list
-      if (is.list(data) && !is.data.frame(data)) {
-        data <- as.data.frame(data)
-      }
-      
-      # Store source info for status display
-      attr(data, "data_source") <- "API"
-      
-      # Cache the result
-      assign(cache_key, data, envir = api_cache)
-      return(data)
-    } else if (status == 401) {
-      # Silent fallback - no message
-      stop("API Unauthorized")
-    } else {
-      # Silent error - no message
-      stop("API request failed with status: ", status)
-    }
-  }, error = function(e) {
-    # Fallback to CSV
-    csv_file <- if (is.null(csv_filename)) paste0(table_name, ".csv") else csv_filename
-    
-    if (file.exists(csv_file)) {
-      # Silent fallback - no message
-      data <- read.csv(csv_file)
-      
-      # Store source info for status display
-      attr(data, "data_source") <- "CSV"
-      
-      # Cache the CSV data too
-      assign(cache_key, data, envir = api_cache)
-      return(data)
-    } else {
-      stop("Both API and CSV fallback failed for ", table_name, ": ", e$message)
-    }
-  })
-}
-
-# Function to clear cache if needed
-clear_cache <- function() {
-  rm(list = ls(envir = api_cache), envir = api_cache)
-  # Silent cache clear
-}
-
-# Load all data using the new fetch function (silently)
+# Load all data
 site_attr <- fetch_data("site_attr")
 flags <- fetch_data("flags")
 inverts <- fetch_data("inverts")
@@ -111,33 +43,6 @@ soil <- fetch_data("soil")
 soil_param <- fetch_data("soil_param")
 water <- fetch_data("water")
 water_param <- fetch_data("water_param")
-
-# Optional: Add a reactive function to refresh data
-refresh_data <- function() {
-  clear_cache()
-  
-  # Reload all data
-  site_attr <<- fetch_data("site_attr")
-  flags <<- fetch_data("flags")
-  inverts <<- fetch_data("inverts")
-  invert_taxon <<- fetch_data("invert_param")
-  soil <<- fetch_data("soil")
-  soil_param <<- fetch_data("soil_param")
-  water <<- fetch_data("water")
-  water_param <<- fetch_data("water_param")
-  
-  # Silent refresh complete
-}
-
-# Commented out original CSV loading for reference
-# site_attr <- read.csv('site_attr.csv')
-# flags <- read.csv('flags.csv')
-# inverts <- read.csv('inverts.csv')
-# invert_taxon <- read.csv('invert_param.csv')
-# soil <- read.csv('soil.csv')
-# soil_param <- read.csv('soil_param.csv')
-# water <- read.csv('water.csv')
-# water_param <- read.csv('water_param.csv')
 ```
 
 ```{r grouping labels}
@@ -229,41 +134,6 @@ observeEvent(input$active_tab, {
 })
 ```
 
-```{r dark theme for ggplot}
-#for all ggplot figures (histogram, boxplot, barplot)
-theme_ugsdark <- function() {
-  theme_minimal(
-    base_family = 'Segoe UI'
-  ) +
-    theme(
-      axis.text = element_text(
-        size = 13,
-        color = "#ffffff"
-      ),
-      axis.title = element_text(
-        size = 14,
-        color = '#ffffff'
-      ),
-      strip.text = element_text(size = 14, 
-                                color = '#ffffff'), 
-      panel.grid.minor = element_line(color = '#5E5E5E'),
-      panel.grid.major = element_line(color = '#5E5E5E'),
-      panel.border = element_rect(color = '#282828', fill = NA), 
-      plot.background = element_rect(fill = '#282828'),
-    panel.background = element_rect(fill = '#282828'), 
-    plot.caption = element_text(
-      color = '#FFFFFF',
-      size = 14, face = 'bold',
-      hjust = 0.5),
-    plot.margin = margin(10, 15, 10, 35),
-    legend.title = element_text(color = '#FFFFFF'), 
-    legend.text = element_text(color = '#FFFFFF', 
-                               size = 13), 
-    legend.background = element_rect(fill = '#282828', 
-                                     color = NA), 
-    )     
-}
-```
 
 ```{r wq criteria}
 #create data frame with Utah 3D criteria for water chemistry plots; 80% complete
