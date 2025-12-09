@@ -2,9 +2,11 @@
 # Provides reusable functions for summary tables and downloads
 
 #' Create a summary statistics table
-#' @param data Data frame with value and subpop columns (can be sf)
+#' @param data Data frame with value, subpop, and parameter columns (can be sf)
+#' @param param_df Optional parameter data frame to get units from
+#' @param label_col Column containing label (default: "label", use "definition" for inverts)
 #' @return A DT datatable object
-create_summary_table <- function(data) {
+create_summary_table <- function(data, param_df = NULL, label_col = "label") {
 
   # Drop geometry if sf object
   if (inherits(data, "sf")) {
@@ -26,6 +28,17 @@ create_summary_table <- function(data) {
     ) %>%
     dplyr::rename(Group = subpop) %>%
     dplyr::select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
+
+  # Add units to column headers if param_df provided
+  if (!is.null(param_df) && "parameter" %in% names(data)) {
+    param_info <- subset(param_df, param_df$parameter == unique(data$parameter))
+    units <- paste0("(", param_info$units[1], ")")
+    colnames(table_df) <- c("Group", "Sample Size",
+                            paste("Min", units),
+                            paste("Median", units),
+                            paste("Mean", units),
+                            paste("Max", units))
+  }
 
   DT::datatable(
     table_df,

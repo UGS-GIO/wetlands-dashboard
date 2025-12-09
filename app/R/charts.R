@@ -45,9 +45,11 @@ create_histogram <- function(data, x_label, caption, subpop_var,
   # Add faceting if provided
   if (!is.null(facet_var)) {
     if (!is.null(facet_labels)) {
+      # Create labeller from named vector
+      label_func <- setNames(list(facet_labels), facet_var)
       p <- p + facet_wrap(
         as.formula(paste0("~", facet_var)),
-        labeller = labeller(.cols = facet_labels)
+        labeller = do.call(labeller, label_func)
       )
     } else {
       p <- p + facet_wrap(as.formula(paste0("~", facet_var)))
@@ -62,12 +64,14 @@ create_histogram <- function(data, x_label, caption, subpop_var,
 #' @param y_label Y-axis label (typically "Parameter (units)")
 #' @param caption_param Parameter name for caption
 #' @param subpop_var Name of the subpopulation variable for caption
+#' @param hline_value Optional value for horizontal reference line (e.g., WQ criteria)
 #' @return ggplot object
-create_boxplot <- function(data, y_label, caption_param, subpop_var) {
+create_boxplot <- function(data, y_label, caption_param, subpop_var,
+                           hline_value = NULL) {
 
-  ggplot(data, aes(x = subpop, y = value, fill = subpop)) +
-    geom_boxplot(alpha = 0.9, color = '#d3d3d3') +
-    geom_jitter(width = 0.1, alpha = 0.8, color = '#d3d3d3') +
+  p <- ggplot(data, aes(x = subpop, y = value, fill = subpop)) +
+    geom_boxplot(alpha = 0.9, color = '#dedede') +
+    geom_jitter(width = 0.1, alpha = 0.8, color = '#dedede') +
     scale_fill_brewer(palette = 'PuOr') +
     guides(fill = 'none') +
     labs(
@@ -79,9 +83,20 @@ create_boxplot <- function(data, y_label, caption_param, subpop_var) {
         width = 50
       )
     ) +
-    scale_x_discrete(labels = function(x) sub('\\s', '\n', x)) +
+    scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 12)) +
     scale_y_continuous(label = scales::comma) +
     theme_ugsdark()
+
+  # Add horizontal reference line if provided
+  if (!is.null(hline_value) && !is.na(hline_value)) {
+    p <- p + geom_hline(
+      yintercept = hline_value,
+      linetype = 'dashed',
+      color = '#FFFFFF'
+    )
+  }
+
+  p
 }
 
 #' Get chart title from parameter info

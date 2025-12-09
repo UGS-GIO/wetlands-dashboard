@@ -28,6 +28,7 @@ library(httr)
 library(jsonlite)
 
 # Source helper functions
+source("R/config.R")
 source("R/data.R")
 source("R/theme.R")
 source("R/maps.R")
@@ -45,73 +46,9 @@ water <- fetch_data("water")
 water_param <- fetch_data("water_param")
 ```
 
-```{r grouping labels}
-#huc12 --> huc6, number to watershed name
-huc6_map <- list(
-  `Upper Colorado-Dolores` = '140300', 
-  `Upper Green` = '140401', 
-  `White-Yampa` = '140500',                                    
-  `Lower Green` = '140600',   
-  `Upper Colorado-Dirty Devil` = '140700', 
-  `Lower San Juan` = '140802',  
-  `Lower Colorado-Lake Mead` = '150100', 
-  `Upper Bear` = '160101',  
-  `Lower Bear` = '160102',  
-  `Weber` = '160201',  
-  `Jordan` = '160202', 
-  `Great Salt Lake` = '160203', 
-  `Escalante Desert-Sevier Lake` = '160300', 
-  `Upper Snake` = '170402' 
-)
-
-classify_huc <- function(huc_codes) {
-  huc6 <- substr(as.character(huc_codes), 1, 6)
-  
-  lookup <- unlist(huc6_map)
-  names(lookup) <- names(huc6_map)
-  huc6_to_label <- setNames(names(lookup), lookup)
-  
-  sapply(huc6, function(code) {
-    if (code %in% names(huc6_to_label)) {
-      huc6_to_label[[code]]
-    } else {
-      "Other"
-    }
-  })
-}
-
-site_attr$Watershed <- classify_huc(site_attr$huc8)
-
-#Cowardin classification --> Utah wetland types
-classify_wetland <- function(codes) {
-  sapply(codes, function(code) {
-    if (grepl("AB", code)) {
-      "Aquatic Bed"
-    } else if (grepl("EM", code)) {
-      "Marsh"
-    } else if (grepl("SS", code) || grepl("FO", code)) {
-      "Woody"
-    } else if (grepl("UB", code) || grepl("US", code)) {
-      "Playa/Mudflat"
-    } else {
-      "Other"
-    }
-  })
-}
-site_attr$`Wetland Type` <- classify_wetland(site_attr$sysclass)
-
-# Remove equipment blanks from site list
-site_attr <- site_attr[!grepl("_blank_", site_attr$siteid), ]
-
-#add organization to site att list
-## update as new data comes in
-dwq_studies <- c("fr2020", "fr2013", "fr2015", "gslwet2017", "iw2012", "highfreq19", 
-                 "iw2019", "ref2014", "ref2015", "spur2011")
-ugs_studies <- c("pm2022", "ugswet")
-usu_studies <- c("usuwet")
-site_attr$project <- ifelse(site_attr$project %in% dwq_studies, 'Utah Division of Water Quality', site_attr$project)
-site_attr$project <- ifelse(site_attr$project %in% ugs_studies, 'Utah Geological Survey', site_attr$project)
-site_attr$project <- ifelse(site_attr$project %in% usu_studies, 'Utah State University', site_attr$project)
+```{r prepare site attributes}
+# Add derived columns (Watershed, Wetland Type, organization) and remove blanks
+site_attr <- prepare_site_attr(site_attr)
 ```
 
 ```{r tab change handler}
@@ -584,74 +521,14 @@ filtered <-
 
 ```{r water map plot}
 # Create base map (renders once)
-output$water_map <- renderLeaflet({
-  leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>%
-    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
-})
+output$water_map <- renderLeaflet({ create_base_map() })
 
 # Update markers reactively using leafletProxy
 observe({
   data <- filtered()
   req(nrow(data) > 0)
-
-  # Create weight vector (vectorized for performance)
-  weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
-
-  fill_pal <- 
-    colorNumeric(palette = 'plasma', domain = data$value, reverse = TRUE)
-  outline_pal <- 
-    colorFactor(palette = c('black', 'gray50'), domain = c('filtered', 'unfiltered'))
-  chart_info <- 
-    subset(water_param, parameter == unique(data$parameter))
-  chart_title <- 
-    paste0(chart_info$label[1], ' (', chart_info$units[1], ')')
-
-  # Clear and update map
-  leafletProxy("water_map", data = data) %>%
-    clearMarkers() %>%
-    clearControls() %>%
-    addCircleMarkers(
-      fillColor = ~fill_pal(value),
-      fillOpacity = 0.8,
-      color = ~outline_pal(fraction),
-      radius = 8,
-      stroke = TRUE,
-      weight = weight_vector,
-      label = ~paste0(value, ' ', units, ' (', fraction, ')')
-    ) %>%
-    addLegend(
-      pal = fill_pal,
-      values = data$value,
-      position = 'bottomright',
-      opacity = 1,
-      title = chart_title,
-      layerId = "fill_legend"
-    ) %>%
-    addLegend(
-      colors = c('black', '#7f7f7f'),
-      opacity = 1,
-      labels = c('Filtered', 'Unfiltered'),
-      position = 'bottomright',
-      title = 'Sample Type (Outline)',
-      layerId = "outline_legend"
-    ) %>%
-    {
-      # Calculate bounds and apply fitBounds
-      bounds <- st_bbox(data)
-      if (all(is.finite(bounds)) && 
-          bounds["xmin"] < bounds["xmax"] && 
-          bounds["ymin"] < bounds["ymax"]) {
-        fitBounds(., 
-          lng1 = unname(bounds["xmin"]),
-          lat1 = unname(bounds["ymin"]),
-          lng2 = unname(bounds["xmax"]),
-          lat2 = unname(bounds["ymax"]),
-          options = list(padding = c(50, 50)))
-      } else {
-        .  # Return unchanged if bounds invalid
-      }
-    }
+  param <- unique(data$parameter)
+  update_water_map("water_map", data, get_chart_title(water_param, param))
 })
 
 # Render the leaflet output
@@ -663,92 +540,49 @@ Row <!-- Water Row 4: histogram and boxplot -->
 ### Parameter Distribution {data-width=550}
 <!-- Water Row 4 Column 1: histogram --> 
 ```{r water histogram}
-sample_labs <- c(filtered = 'Filtered', #facet plot labels
-                 unfiltered = 'Unfiltered')
+sample_labs <- c(filtered = 'Filtered', unfiltered = 'Unfiltered')
 
-subpop <- reactive({ #reactive dataframe based on wq3
+subpop <- reactive({
   req(input$subpop)
-  
-  filtered() %>% 
-    mutate(subpop = .data[[input$subpop]]) %>% 
+  filtered() %>%
+    mutate(subpop = .data[[input$subpop]]) %>%
     select(siteid, parameter, value, fraction, acute, chronic, subpop)
-  }) #include columns for fraction and wqs lines
+})
 
-renderPlot({ 
-  req(subpop()) #wq3
+renderPlot({
+  req(subpop())
   data_hist <- subpop()
-  chart_info <- subset(
-    water_param, parameter == unique(data_hist$parameter)) #for labels
-  chart_title <- paste0( #label parameter + uniques
-    chart_info$label[1], ' (', chart_info$units[1], ')') 
-  chart_caption <- chart_info$label[1]
-  chart_acute <- chart_info$acute[1] #acute wqs line
-  
-  #plot data
-  ggplot(
-    data_hist, aes(x = value, fill = subpop)) + #plot data
-    geom_histogram(bins = 10, color = 'gray80') + #plot type
-    scale_fill_brewer( #histogram fill based on wq3
-      palette = 'PuOr', name = NULL) + #legend label
-    scale_x_continuous(label = scales::comma) + #x axis labels
-    geom_vline(
-      xintercept = chart_acute, #horizontal line for wqs criteria
-      linetype = 'dashed', 
-      color = '#FFFFFF') + 
-    labs(x = chart_title, #x axis label
-           y = 'Frequency',
-         caption = str_wrap(paste0('Distribution of ',
-                          chart_caption,
-                          ' observations shaded by ',
-                          input$subpop), width = 50)) + #y axis label
-    coord_flip() + #flip from vertical to horizontal
-    facet_wrap(
-      ~fraction, #separate plots for filtered & unfiltered
-      labeller = labeller(fraction = sample_labs)) + #facet labels
-    theme_ugsdark() + #apply dark theme
-    theme(legend.position = 'inside', #legend inside plots
-      legend.position.inside = c(0.7, 0.8))
-    })
+  param <- unique(data_hist$parameter)
+  chart_info <- subset(water_param, parameter == param)
+
+  create_histogram(
+    data = data_hist,
+    x_label = get_chart_title(water_param, param),
+    caption = get_chart_caption(water_param, param),
+    subpop_var = input$subpop,
+    facet_var = "fraction",
+    facet_labels = sample_labs,
+    vline_value = chart_info$acute[1]
+  )
+})
 ```
 
 ### Group Comparison {data-width=550}
 <!-- Water Row 4 Column 2: box plot -->
 ```{r water boxplot}
 renderPlot({
-  req(subpop()) #wq3
+  req(subpop())
   data_box <- subpop()
-  chart_info <- #wq2 details
-    subset(water_param, parameter == unique(data_box$parameter))
-  chart_title <- #labels parameter + units
-    paste0(chart_info$label[1], ' (', chart_info$units[1], ')')
-  chart_caption <- chart_info$label[1]
-  chart_acute <- chart_info$acute[1] #wqs criteria line
+  param <- unique(data_box$parameter)
+  chart_info <- subset(water_param, parameter == param)
 
-  ggplot(data_box, #wq2 + wq3 data for boxplot
-      aes(x = subpop,
-          y = value,
-          fill = subpop)) +
-      geom_boxplot(alpha = 0.9,
-                   color = '#dedeDe') +
-      geom_jitter(width = 0.1,
-                  alpha = 0.8,
-                  color = '#dEdEdE') +
-      scale_fill_brewer(palette = 'PuOr',
-                        name = NULL) +
-      guides(fill = 'none', shape = 'none') +
-      geom_hline(yintercept = chart_acute, #wq criteria
-        linetype = 'dashed',
-        color = '#FFFFFF') +
-      labs(x = NULL,
-           y = chart_title,
-           caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
-                          chart_caption,
-                          ' across ',
-                          input$subpop, 's'), width = 50)) +
-      scale_x_discrete(
-        labels = function(x) str_wrap(x, width = 12)) +
-      scale_y_continuous(label = comma) +
-      theme_ugsdark()
+  create_boxplot(
+    data = data_box,
+    y_label = get_chart_title(water_param, param),
+    caption_param = get_chart_caption(water_param, param),
+    subpop_var = input$subpop,
+    hline_value = chart_info$acute[1]
+  )
 })
 ```
 
@@ -759,50 +593,9 @@ Row {data-height=650} <!-- Water Row 5: summary and download -->
 <!-- Water Row 5 Column 1: summary table -->
 ```{r water summary table}
 div(class = "summary-box",
-renderDataTable({
-  data <- subpop()
-  # Get units for current parameter
-  param_info <- subset(water_param, parameter == unique(data$parameter))
-  units_label <- paste0("(", param_info$units[1], ")")
-
-  table_df <- data %>%
-    st_drop_geometry() %>%
-    group_by(subpop) %>%
-      summarise(
-        `Sample Size` = n(),
-        Minimum = min(value, na.rm = TRUE),
-        Median = median(value, na.rm = TRUE),
-        Mean = mean(value, na.rm = TRUE),
-        Maximum = max(value, na.rm = TRUE),
-        .groups = 'drop'
-      ) %>%
-    mutate(across(where(is.numeric), ~signif(., 2))) %>%
-    rename(Group = subpop)
-
-  # Rename columns to include units
-  colnames(table_df) <- c("Group", "Sample Size",
-                          paste("Min", units_label),
-                          paste("Median", units_label),
-                          paste("Mean", units_label),
-                          paste("Max", units_label))
-
-  datatable(table_df,
-    rownames = FALSE,
-    class = 'compact dark-theme',
-    fillContainer = TRUE,
-    options = list(
-      dom = 't',
-      ordering = FALSE,
-      paging = FALSE,
-      searching = FALSE,
-      info = FALSE,
-      scrollY = 'calc(50vh - 150px)',
-      scrollCollapse = TRUE,
-      columnDefs = list(
-        list(className = 'dt-center', targets = '_all')
-      )
-    ))
-})
+  renderDataTable({
+    create_summary_table(subpop(), water_param)
+  })
 )
 ```
 
@@ -1061,69 +854,14 @@ filtered_soil <- reactive({
 
 ```{r soil map plot}
 # Create base map (renders once)
-output$soil_map <- renderLeaflet({
-  leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>%
-    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
-})
+output$soil_map <- renderLeaflet({ create_base_map() })
 
 # Update markers reactively using leafletProxy
 observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
-
-  pal <- colorNumeric(
-    palette = 'plasma',
-    domain = data_soil$value,
-    reverse = TRUE)
-
-  chart_info_soil <- subset(
-    soil_param,
-    parameter == unique(data_soil$parameter))
-
-  chart_title_soil <- paste0(
-    chart_info_soil$label[1],
-    ' (',
-    chart_info_soil$units[1],
-    ')')
-
-  # Clear and update map
-  leafletProxy("soil_map", data = data_soil) %>%
-    clearMarkers() %>%
-    clearControls() %>%
-    addCircleMarkers(
-      fillColor = ~pal(value),
-      fillOpacity = 0.8,
-      radius = 8,
-      color = '#7f7f7f',
-      stroke = TRUE,
-      weight = 1,
-      label = ~paste0(value, ' ', units)
-    ) %>%
-    addLegend(
-      pal = pal,
-      values = data_soil$value,
-      position = 'bottomright',
-      opacity = 1,
-      title = chart_title_soil,
-      layerId = "soil_legend"
-    ) %>%
-    {
-      # Calculate bounds and apply fitBounds
-      bounds <- st_bbox(data_soil)
-      if (all(is.finite(bounds)) && 
-          bounds["xmin"] < bounds["xmax"] && 
-          bounds["ymin"] < bounds["ymax"]) {
-        fitBounds(., 
-          lng1 = unname(bounds["xmin"]),
-          lat1 = unname(bounds["ymin"]),
-          lng2 = unname(bounds["xmax"]),
-          lat2 = unname(bounds["ymax"]),
-          options = list(padding = c(50, 50)))
-      } else {
-        .  # Return unchanged if bounds invalid
-      }
-    }
+  param <- unique(data_soil$parameter)
+  update_map_markers("soil_map", data_soil, get_chart_title(soil_param, param), "soil_legend")
 })
 
 # Render the leaflet output
@@ -1136,83 +874,41 @@ Row <!-- Section Soil Row 4 - histogram and boxplot -->
 ### Parameter Distribution
 ```{r soil histogram}
 subpop_soil <- reactive({
-  req(input$subpop_soil) #SC3
-  
-  filtered_soil() %>% 
-    mutate(subpop = .data[[input$subpop_soil]]) %>% 
+  req(input$subpop_soil)
+  filtered_soil() %>%
+    mutate(subpop = .data[[input$subpop_soil]]) %>%
     select(siteid, parameter, value, subpop)
-  })
+})
 
-renderPlot({ 
+renderPlot({
   req(subpop_soil())
-  data_hist_soil <- subpop_soil()
-  
-  chart_info_soil <- 
-    subset(soil_param, 
-           parameter == unique(data_hist_soil$parameter))
-  
-  chart_title_soil <- 
-    paste0(chart_info_soil$label[1], 
-           ' (', 
-           chart_info_soil$units[1], 
-           ')')
-  
-  chart_caption <- chart_info_soil$label[1]
-  
-  ggplot(
-    data_hist_soil, aes(x = value, fill = subpop)) + 
-    geom_histogram(bins = 10, color = 'gray80') + 
-    scale_fill_brewer(palette = 'PuOr', 
-                      name = NULL) + 
-    scale_x_continuous(label = scales::comma) + 
-    labs(x = chart_title_soil,
-         y = 'Frequency',
-         caption = str_wrap(paste0('Distribution of ',
-                          chart_caption,
-                          ' observations shaded by ',
-                          input$subpop_soil), width = 50)) + 
-    coord_flip() + 
-    theme_ugsdark() + 
-    theme(legend.position = 'inside', 
-      legend.position.inside = c(0.7, 0.8))
-  })
+  data_hist <- subpop_soil()
+  param <- unique(data_hist$parameter)
+
+  create_histogram(
+    data = data_hist,
+    x_label = get_chart_title(soil_param, param),
+    caption = get_chart_caption(soil_param, param),
+    subpop_var = input$subpop_soil
+  )
+})
 ```
 
-### Group Comparison 
-<!-- Soil Row 4 Column 2 - boxplot --> 
+### Group Comparison
+<!-- Soil Row 4 Column 2 - boxplot -->
 ```{r soil boxplot}
 renderPlot({
   req(subpop_soil())
-  data_box_soil <- subpop_soil()
-  
-  chart_info_soil <- subset(
-    soil_param, 
-    parameter == unique(data_box_soil$parameter))
-  
-  chart_title_soil <- paste0(
-    chart_info_soil$label[1], 
-    ' (', 
-    chart_info_soil$units[1], 
-    ')') 
-  chart_caption <- chart_info_soil$label[1]
-  
-  ggplot(
-    data_box_soil, aes(x = subpop, y = value, fill = subpop)) + 
-    geom_boxplot(alpha = 0.9, color = '#d3d3d3') + 
-    geom_jitter(width = 0.1, alpha = 0.8, color = '#d3d3d3') + 
-    scale_fill_brewer(palette = 'PuOr') + 
-    guides(fill = 'none') + 
-    labs(x = '',
-         y = chart_title_soil,
-         caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
-                          chart_caption,
-                          ' across ',
-                          input$subpop_soil, 's'), width = 50)) + 
-    scale_x_discrete(
-      labels = function(x){sub('\\s', '\n', x)}) + 
-    scale_y_continuous(label = comma) + 
-    theme_ugsdark()
-  })
+  data_box <- subpop_soil()
+  param <- unique(data_box$parameter)
+
+  create_boxplot(
+    data = data_box,
+    y_label = get_chart_title(soil_param, param),
+    caption_param = get_chart_caption(soil_param, param),
+    subpop_var = input$subpop_soil
+  )
+})
 ```
 
 Row {data-height=650} <!-- Section Soil Row 5 - summary & download -->
@@ -1222,38 +918,9 @@ Row {data-height=650} <!-- Section Soil Row 5 - summary & download -->
 
 ```{r soil table}
 div(class = "summary-box",
-renderDataTable({
-  table_df_soil <- subpop_soil() %>%
-    st_drop_geometry() %>%
-    group_by(subpop) %>%
-      summarise(
-        `Sample Size` = n(),
-        Minimum = min(value, na.rm = TRUE),
-        Median = median(value, na.rm = TRUE),
-        Mean = mean(value, na.rm = TRUE),
-        Maximum = max(value, na.rm = TRUE),
-        .groups = 'drop'
-      ) %>%
-
-    mutate(
-      across(where(is.numeric), ~signif(., 2))) %>%
-    rename(Group = subpop) %>%
-    select(
-      Group, `Sample Size`, Minimum, Median, Mean, Maximum)
-
-  datatable(table_df_soil,
-    rownames = FALSE,
-    class = 'compact dark-theme',
-    fillContainer = FALSE,
-    options = list(
-      dom = 't',
-      ordering = FALSE,
-      paging = FALSE,
-      searching = FALSE,
-      info = FALSE,
-      columnDefs = list(list(className = 'dt-center', targets = '_all'))
-    ))
-})
+  renderDataTable({
+    create_summary_table(subpop_soil(), soil_param)
+  })
 )
 ```
 
@@ -1466,69 +1133,19 @@ filtered_invert <- reactive({
 })
 
 # Create base map (renders once)
-output$invert_map <- renderLeaflet({
-  leaflet() %>%
-    addProviderTiles(providers$CartoDB.Positron) %>%
-    setView(lng = -112.41, lat = 40.38, zoom = 7)  # Add default view
-})
+output$invert_map <- renderLeaflet({ create_base_map() })
 
 # Update markers reactively using leafletProxy
 observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
+  param <- unique(data_invert$parameter)
 
-  pal <- colorNumeric( #circle marker color palette
-    palette = 'plasma',
-    domain = data_invert$value,
-    reverse = TRUE)
-  
-  chart_info_invert <- subset(
-    invert_param,
-    parameter == unique(data_invert$parameter))
-  
-  chart_title_invert <-
-    paste0(chart_info_invert$definition[1],
-           ' (',
-           chart_info_invert$units[1],
-           ')')
-
-  # Clear and update map
-  leafletProxy("invert_map", data = data_invert) %>%
-    clearMarkers() %>%
-    clearControls() %>%
-    addCircleMarkers(
-      fillColor = ~pal(value),
-      fillOpacity = 0.8, #transparency
-      radius = 8, #size
-      color = '#7f7f7f', #outline
-      stroke = TRUE, #outline
-      weight = 1, #outline
-      label = ~as.character(value)
-    ) %>%
-    addLegend(
-      pal = pal,
-      values = data_invert$value,
-      position = 'bottomright',
-      opacity = 1,
-      title = chart_title_invert,
-      layerId = "invert_legend"
-    ) %>%
-    {
-      # Calculate bounds and apply fitBounds
-      bounds <- st_bbox(data_invert)
-      if (all(is.finite(bounds)) && 
-          bounds["xmin"] < bounds["xmax"] && 
-          bounds["ymin"] < bounds["ymax"]) {
-        fitBounds(., 
-          lng1 = unname(bounds["xmin"]),
-          lat1 = unname(bounds["ymin"]),
-          lng2 = unname(bounds["xmax"]),
-          lat2 = unname(bounds["ymax"]),
-          options = list(padding = c(50, 50)))
-      } else {
-        .  # Return unchanged if bounds invalid
-      }
-    }
+  # Invert map shows just value, not value + units
+  update_map_markers("invert_map", data_invert,
+                     get_chart_title(invert_param, param, "definition"),
+                     "invert_legend",
+                     label_func = function(d) as.character(d$value))
 })
 
 # Render the leaflet output
@@ -1548,76 +1165,35 @@ subpop_invert <- reactive({
     select(siteid, parameter, value, subpop)
   })
 
-renderPlot({ 
+renderPlot({
   req(subpop_invert())
   data_hist_invert <- subpop_invert()
-  
-  chart_info_invert <- 
-    subset(invert_param, 
-           parameter == unique(data_hist_invert$parameter))
-  chart_title_invert <- 
-    paste0(chart_info_invert$definition[1], 
-           ' (', 
-           chart_info_invert$units[1], 
-           ')')
-  chart_caption_invert <- chart_info_invert$definition[1]
-  
-  ggplot(data_hist_invert, 
-         aes(x = value, 
-             fill = subpop)) + 
-    geom_histogram(bins = 10, 
-                   color = '#d3d3d3') + 
-    scale_fill_brewer(palette = 'PuOr', 
-                      name = NULL) + 
-    scale_x_continuous(label = scales::comma) + 
-    labs(x = chart_title_invert,
-          y = 'Frequency',
-          caption = str_wrap(paste0('Distribution of ',
-                           chart_caption_invert,
-                          ' observations shaded by ',
-                          input$subpop_invert), width = 50)) + 
-    coord_flip() + 
-    theme_ugsdark() + 
-    theme(legend.position = 'inside', 
-          legend.position.inside = c(0.7, 0.8))
-    })
+  param <- unique(data_hist_invert$parameter)
+
+  create_histogram(
+    data = data_hist_invert,
+    x_label = get_chart_title(invert_param, param, "definition"),
+    caption = get_chart_caption(invert_param, param, "definition"),
+    subpop_var = input$subpop_invert
+  )
+})
 ```
 
 ### Group Comparison
 <!-- Section Invert Row 4 Column 2: boxplot --> 
 ```{r invert boxplot}
 renderPlot({
-  req(subpop_invert()) #MI2
+  req(subpop_invert())
   data_invert <- subpop_invert()
-  
-  chart_info_invert <- 
-    subset(invert_param, parameter == unique(data_invert$parameter))
-  chart_title_invert <- #create y axis label
-    paste0(chart_info_invert$definition[1], ' (',
-           chart_info_invert$units[1], ')')
-  chart_caption_invert <- chart_info_invert$definition[1]
-  
-    ggplot(data_invert, 
-           aes(x = subpop, 
-               y = value, 
-               fill = subpop)) + 
-      geom_boxplot(alpha = 0.9, 
-                   color = '#d5d5d5') + 
-      geom_jitter(width = 0.1, 
-                  alpha = 0.8, 
-                  color = '#d5d5d5') + 
-      scale_fill_brewer(palette = 'PuOr', name = NULL) + 
-      guides(fill = 'none') +
-      labs(x = '',
-           y = chart_title_invert,
-           caption = str_wrap(paste0('Boxplot (25-75th percentile) of ',
-                          chart_caption_invert,
-                          ' across ',
-                          input$subpop_invert, 's'), width = 50)) + 
-      scale_x_discrete(labels = function(x){sub('\\s', '\n', x)}) + 
-      scale_y_continuous(label = comma) + 
-      theme_ugsdark()
-  })
+  param <- unique(data_invert$parameter)
+
+  create_boxplot(
+    data = data_invert,
+    y_label = get_chart_title(invert_param, param, "definition"),
+    caption_param = get_chart_caption(invert_param, param, "definition"),
+    subpop_var = input$subpop_invert
+  )
+})
 ```
 
 Row {data-height=650} <!-- Section Invert Row 5: summary and download -->
@@ -1626,37 +1202,8 @@ Row {data-height=650} <!-- Section Invert Row 5: summary and download -->
 <!-- Section Invert Row 5 Column 1: summary table -->
 ```{r invert table}
 div(class = "summary-box",
-renderDataTable({
-  table_df_invert <- subpop_invert() %>%
-    st_drop_geometry() %>%
-    group_by(subpop) %>% #MI2
-      summarise( #calculate statistics below
-        `Sample Size` = n(),
-        Minimum = min(value, na.rm = TRUE),
-        Median = median(value, na.rm = TRUE),
-        Mean = mean(value, na.rm = TRUE),
-        Maximum = max(value, na.rm = TRUE),
-        .groups = 'drop'
-      ) %>%
-    mutate(
-      across(where(is.numeric),
-             ~signif(., 2))) %>% #round to 2 significant figures
-    rename(Group = subpop) %>%
-    select(Group, `Sample Size`, Minimum, Median, Mean, Maximum)
-
-  datatable(table_df_invert,
-            rownames = FALSE,
-            class = 'compact dark-theme',
-            fillContainer = FALSE,
-            options = list(
-              dom = 't',
-              ordering = FALSE,
-              paging = FALSE,
-              searching = FALSE,
-              info = FALSE,
-              columnDefs = list(
-                list(className = 'dt-center', targets = '_all'))
-            ))
+  renderDataTable({
+    create_summary_table(subpop_invert(), invert_param, "definition")
   })
 )
 ```
