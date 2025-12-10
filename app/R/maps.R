@@ -36,7 +36,7 @@ update_map_markers <- function(map_id, data, title, legend_id,
 
   proxy <- leafletProxy(map_id, data = data) %>%
     clearMarkers() %>%
-    clearControls() %>%
+    removeControl(legend_id) %>%
     addCircleMarkers(
       fillColor = ~pal(value),
       fillOpacity = 0.8,
@@ -81,8 +81,7 @@ update_map_markers <- function(map_id, data, title, legend_id,
 update_water_map <- function(map_id, data, title) {
 
   # Weight based on filtered/unfiltered
-
-weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
+  weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
 
   fill_pal <- colorNumeric(
     palette = 'plasma',
@@ -112,16 +111,14 @@ weight_vector <- ifelse(data$fraction == 'filtered', 3, 1)
       values = data$value,
       position = 'bottomright',
       opacity = 1,
-      title = title,
-      layerId = "fill_legend"
+      title = title
     ) %>%
     addLegend(
       colors = c('black', '#7f7f7f'),
       opacity = 1,
       labels = c('Filtered', 'Unfiltered'),
       position = 'bottomright',
-      title = 'Sample Type (Outline)',
-      layerId = "outline_legend"
+      title = 'Sample Type (Outline)'
     )
 
   # Fit bounds if valid

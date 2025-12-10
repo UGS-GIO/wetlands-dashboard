@@ -377,10 +377,10 @@ renderUI({
   
   choices <- switch(input$water_category, #wq2 options based on wq1 selection
                     #based on water$label, no water$parameter
-                    'genchem' = #wq2 options for wq1 genchem
-                      c('Conductivity' = 'Electrical Conductivity', 
-                        'pH' = 'pH', 
-                        'Dissolved oxgyen' = 'Dissolved Oxygen', 
+                    'genchem' = #wq2 options for wq1 genchem (polind category labels)
+                      c('Conductivity' = 'Electrical Conductivity',
+                        'pH' = 'pH',
+                        'Dissolved Oxygen' = 'Dissolved Oxygen',
                         'Temperature' = 'Temperature'), 
                     'nuts' = #wq2 options from wq1 nuts
                       c('Biological Oxygen Demand' = 'Biological Oxygen Demand', 
@@ -525,10 +525,12 @@ output$water_map <- renderLeaflet({ create_base_map() })
 
 # Update markers reactively using leafletProxy
 observe({
+  req(input$h2o_param)
   data <- filtered()
   req(nrow(data) > 0)
-  param <- unique(data$parameter)
-  update_water_map("water_map", data, get_chart_title(water_param, param))
+  # Extract title from filtered data
+  legend_title <- paste0(unique(data$label)[1], ' (', unique(data$units)[1], ')')
+  update_water_map("water_map", data, legend_title)
 })
 
 # Render the leaflet output
@@ -860,8 +862,8 @@ output$soil_map <- renderLeaflet({ create_base_map() })
 observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
-  param <- unique(data_soil$parameter)
-  update_map_markers("soil_map", data_soil, get_chart_title(soil_param, param), "soil_legend")
+  legend_title <- paste0(unique(data_soil$label)[1], ' (', unique(data_soil$units)[1], ')')
+  update_map_markers("soil_map", data_soil, legend_title, "soil_legend")
 })
 
 # Render the leaflet output
@@ -1139,12 +1141,8 @@ output$invert_map <- renderLeaflet({ create_base_map() })
 observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
-  param <- unique(data_invert$parameter)
-
-  # Invert map shows just value, not value + units
-  update_map_markers("invert_map", data_invert,
-                     get_chart_title(invert_param, param, "definition"),
-                     "invert_legend",
+  legend_title <- paste0(unique(data_invert$definition)[1], ' (', unique(data_invert$units)[1], ')')
+  update_map_markers("invert_map", data_invert, legend_title, "invert_legend",
                      label_func = function(d) as.character(d$value))
 })
 

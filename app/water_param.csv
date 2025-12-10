@@ -79,4 +79,4 @@
 78,hard,"Hardness, Filtered",mg/l,1,0.5,"2340B, calculated from ca_d and mg_d (2.497(ca_d) + 4.118(mg_d))",filtered metals,NA,"Hardness, Filtered"
 79,temp,Temperature,C,-5,-5,multi-parameter probe in field,field,polind,Temperature
 80,tkn,"Total Kjeldahl Nitrogen, Non-filtered",mg/l,0.082,0.03,351.4,total nutrients,nuts,Total Kjeldahl Nitrogen
-81,ph,pH,pH,0.01,0.01,multi-parameter probe in field,field,polind, 
+81,ph,pH,pH,0.01,0.01,multi-parameter probe in field,field,polind,pH

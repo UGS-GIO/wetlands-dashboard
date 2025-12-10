@@ -20,7 +20,6 @@ fetch_data <- function(table_name, csv_filename = NULL) {
     return(get(cache_key, envir = api_cache))
   }
 
-  # Try API first
   tryCatch({
     url <- paste0(API_BASE_URL, "/wetdash_", table_name)
 
