@@ -602,12 +602,8 @@ for_download_water <- water %>%
   left_join(water_param %>% select(parameter, definition, mdl, lrl, method, category), by = 'parameter') %>%
   left_join(flags %>% select(site_param, flag), by = 'site_param') %>%
   left_join(site_attr %>% select(siteid:name), by = 'siteid')
-#for_download <- for_download %>% select(oid:value, units, definition:name, ecoregion:`Wetland Type`, geometry)
 
 div(class = "download-box",
-    
-    #tags$h4("Download Water Data"),
-    
     tags$p("Download water quality data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
     
     fluidRow(
