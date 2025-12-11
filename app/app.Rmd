@@ -4,8 +4,8 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: scroll
-    css: style.css
-    logo: UGS-logo-large.png
+    css: www/style.css
+    logo: www/images/UGS-logo-large.png
     includes:
       in_header: header.html
 runtime: shiny
@@ -193,7 +193,7 @@ Wetland hydrology is dynamic, often switching between deep and shallow flooding 
 ### 
 <!-- home row 1 column 2: image -->
 <div class="figure">
-  <img src="bda_strawberry.jpg" alt="Beaver Dam Analog">
+  <img src="images/bda_strawberry.jpg" alt="Beaver Dam Analog">
   <p class="figure.caption">Beaver Dam Analog and wetland near Strawberry Reservoir</p>
 </div>
 
@@ -224,7 +224,7 @@ Row <!-- Home row 3 data sources -->
 <!-- Row 3 Column 1: image -->
 
 <div class="figure">
-  <img src="uwam_crew.jpg" alt="Two Wetland Ecologists">
+  <img src="images/uwam_crew.jpg" alt="Two Wetland Ecologists">
   <p class="figure.caption">UGS ecologists monitoring a wetland in Beaver County</p>
 </div>
 
@@ -333,7 +333,7 @@ Data notes. Of the dozens of water chemistry parameters that can be measured, we
 ### 
 <!-- Water Row 1 Column 2: image --> 
 <div class="figure">
-  <img src="wetland_water.jpg" alt="Surface of a wetland with submerged aquatic vegetation">
+  <img src="images/wetland_water.jpg" alt="Surface of a wetland with submerged aquatic vegetation">
   <p class="figure.caption">Submerged aquatic vegetation in a wetland near Great Salt Lake.</p>
 </div>
 
@@ -653,7 +653,7 @@ Two types of soil measures are displayed below: general chemistry measures and n
 
 ###
 <div class="figure">
-  <img src="playa_soils.jpg" alt="Bare wetland soils">
+  <img src="images/playa_soils.jpg" alt="Bare wetland soils">
   <p class="figure.caption">A salt crust has formed on playa wetland soils near Great Salt Lake</p>
 </div>
 
@@ -905,7 +905,7 @@ Macroinvertebrates are organisms without internal skeletons that are larger than
 ### 
 <!-- Section Invert Row 1 Column 2: picture --> 
 <div class="figure">
-  <img src="damselfly_moab.jpg" alt="Adult blue damselfly">
+  <img src="images/damselfly_moab.jpg" alt="Adult blue damselfly">
   <p class="figure.caption">An adult damselfly rests on wetland vegetation near Moab. </p>
 </div>
 

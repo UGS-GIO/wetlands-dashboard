@@ -55,11 +55,11 @@ fetch_data <- function(table_name, csv_filename = NULL) {
     }
 
   }, error = function(e) {
-    # Fallback to CSV
+    # Fallback to CSV in data/ directory
     csv_file <- if (is.null(csv_filename)) {
-      paste0(table_name, ".csv")
+      paste0("data/", table_name, ".csv")
     } else {
-      csv_filename
+      paste0("data/", csv_filename)
     }
 
     if (file.exists(csv_file)) {
