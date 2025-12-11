@@ -476,14 +476,7 @@ Row {data-height=500} <!-- Water Row 3: map -->
 ### Spatial Patterns
 ```{r water map munge}
 #data munge from wq1-wq3
-water <-
-  left_join(
-    water, #combine water + site_attr (wq3)
-    site_attr %>%
-      select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`)) %>% #create spatial df
-  filter(!is.na(longitude) & !is.na(latitude)) %>%
-    st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) %>%
-  st_jitter(amount = 0.001)
+water <- add_spatial_geometry(water, site_attr)
 
 water <-
   left_join(
@@ -828,14 +821,7 @@ Row {data-height=500} <!-- Section Soil Row 3 -- Map -->
 ### Spatial Patterns
 
 ```{r soil data munge}
-soil <- 
-  left_join(
-    soil, 
-    site_attr %>% select(siteid, latitude, longitude, ecoregion, Watershed, `Wetland Type`), 
-    by = 'siteid') %>% 
-  filter(!is.na(longitude) & !is.na(latitude)) %>% 
-  st_as_sf(coords = c('longitude', 'latitude'), crs = 4326) %>%
-  st_jitter(amount = 0.001)
+soil <- add_spatial_geometry(soil, site_attr)
 
 soil <- 
   left_join(
@@ -1100,17 +1086,7 @@ Row {data-height=500} <!-- Section Invert Row 3: Map -->
 ### Spatial Patterns
 
 ```{r invert map}
-invert_metrics_long <- 
-  left_join(invert_metrics_long, #join invert data to site attributes
-            site_attr %>% 
-              select(siteid, latitude, longitude, 
-                     ecoregion, Watershed, `Wetland Type`), 
-            by = 'siteid') %>% 
-  filter(!is.na(longitude) & !is.na(latitude)) %>% #remove NA
-    st_as_sf( #create spatial object
-      coords = c('longitude', 'latitude'), 
-      crs = 4326) %>% 
-  st_jitter(amount = 0.001) #random jitter for overlap
+invert_metrics_long <- add_spatial_geometry(invert_metrics_long, site_attr)
 
 invert_param <- data.frame(#data frame with units
   parameter = c('abundance', 'richness', 'eto_rel'),
