@@ -34,6 +34,7 @@ source("R/theme.R")
 source("R/maps.R")
 source("R/charts.R")
 source("R/tables.R")
+source("R/reactives.R")
 
 # Load all data
 site_attr <- fetch_data("site_attr")
@@ -528,9 +529,7 @@ observe({
   req(input$h2o_param)
   data <- filtered()
   req(nrow(data) > 0)
-  # Extract title from filtered data
-  legend_title <- paste0(unique(data$label)[1], ' (', unique(data$units)[1], ')')
-  update_water_map("water_map", data, legend_title)
+  update_water_map("water_map", data, build_legend_title(data))
 })
 
 # Render the leaflet output
@@ -557,7 +556,7 @@ renderPlot({
 
   create_histogram(
     data = data_hist,
-    x_label = paste0(unique(data_hist$label)[1], ' (', unique(data_hist$units)[1], ')'),
+    x_label = build_legend_title(data_hist),
     caption = unique(data_hist$label)[1],
     subpop_var = input$subpop,
     facet_var = "fraction",
@@ -576,7 +575,7 @@ renderPlot({
 
   create_boxplot(
     data = data_box,
-    y_label = paste0(unique(data_box$label)[1], ' (', unique(data_box$units)[1], ')'),
+    y_label = build_legend_title(data_box),
     caption_param = unique(data_box$label)[1],
     subpop_var = input$subpop,
     hline_value = unique(data_box$acute)[1]
@@ -858,8 +857,7 @@ output$soil_map <- renderLeaflet({ create_base_map() })
 observe({
   data_soil <- filtered_soil()
   req(nrow(data_soil) > 0)
-  legend_title <- paste0(unique(data_soil$label)[1], ' (', unique(data_soil$units)[1], ')')
-  update_map_markers("soil_map", data_soil, legend_title, "soil_legend")
+  update_map_markers("soil_map", data_soil, build_legend_title(data_soil), "soil_legend")
 })
 
 # Render the leaflet output
@@ -884,7 +882,7 @@ renderPlot({
 
   create_histogram(
     data = data_hist,
-    x_label = paste0(unique(data_hist$label)[1], ' (', unique(data_hist$units)[1], ')'),
+    x_label = build_legend_title(data_hist),
     caption = unique(data_hist$label)[1],
     subpop_var = input$subpop_soil
   )
@@ -900,7 +898,7 @@ renderPlot({
 
   create_boxplot(
     data = data_box,
-    y_label = paste0(unique(data_box$label)[1], ' (', unique(data_box$units)[1], ')'),
+    y_label = build_legend_title(data_box),
     caption_param = unique(data_box$label)[1],
     subpop_var = input$subpop_soil
   )
@@ -1135,9 +1133,8 @@ output$invert_map <- renderLeaflet({ create_base_map() })
 observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
-  legend_title <- paste0(unique(data_invert$definition)[1], ' (', unique(data_invert$units)[1], ')')
-  update_map_markers("invert_map", data_invert, legend_title, "invert_legend",
-                     label_func = function(d) as.character(d$value))
+  update_map_markers("invert_map", data_invert, build_legend_title(data_invert, "definition"),
+                     "invert_legend", label_func = function(d) as.character(d$value))
 })
 
 # Render the leaflet output
@@ -1163,7 +1160,7 @@ renderPlot({
 
   create_histogram(
     data = data_hist_invert,
-    x_label = paste0(unique(data_hist_invert$label)[1], ' (', unique(data_hist_invert$units)[1], ')'),
+    x_label = build_legend_title(data_hist_invert),
     caption = unique(data_hist_invert$label)[1],
     subpop_var = input$subpop_invert
   )
@@ -1179,7 +1176,7 @@ renderPlot({
 
   create_boxplot(
     data = data_invert,
-    y_label = paste0(unique(data_invert$label)[1], ' (', unique(data_invert$units)[1], ')'),
+    y_label = build_legend_title(data_invert),
     caption_param = unique(data_invert$label)[1],
     subpop_var = input$subpop_invert
   )
