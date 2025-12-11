@@ -2,7 +2,8 @@
 body {
   background-color: #1B1B1B; /* Main background */
   color: #FFFFFF;           /* Font color */
-  font-family: 'Segoe UI', sans-serif/*"Helvetica Neue", Helvetica, Arial, sans-serif;*/
+  font-family: 'Segoe UI', sans-serif;
+  padding-top: 10px !important;
 }
 
 /* === PAGE MARGINS === */
@@ -11,9 +12,12 @@ body {
   padding-right: 100px !important;
 }
 
-/* === ROW SPACING === */
+/* === ROW STYLING === */
 .section.level2 {
   margin-bottom: 7px !important;
+  display: flex;
+  align-items: stretch;
+  flex-basis: auto !important;
 }
 
 /* === HEADER (NAVBAR) STYLING === */
@@ -29,10 +33,6 @@ body {
   top: 0; /*stick to top of viewport*/
   z-index: 2000; /* Higher than Leaflet legend (1000) */
 }
-
-body{
-  padding-top: 10px !important; 
-} 
 
 /* === HEADER LOGO + TITLE === */
 .navbar .navbar-brand {
@@ -104,7 +104,7 @@ h2.section.level2 {
   margin-bottom: 5px;
 }
 
-/* === ROW STYLING === */
+/* === SECTION CONTAINERS === */
 .section {
   padding: 5px;   /* keep spacing */
   background: none;
@@ -120,11 +120,7 @@ h2.section.level2 {
   margin: 0 5px 5px 5px; /* symmetric spacing */
 }
 
-/* Make columns in a row equal height */
-.section.level2 {
-  display: flex;
-  align-items: stretch;
-}
+/* Columns in a row have equal height (see ROW STYLING above) */
 
 .section.level2 > .section {
   display: flex;
@@ -146,12 +142,8 @@ ul li, ol li {
   margin-bottom: 0.5em;  /* Adjust value as needed */
 }
 
-/* == row height settings === */
+/* == row height settings (see ROW STYLING for .section.level2 flex-basis) === */
 .chart-stage-flex {
-  flex-basis: auto !important;
-}
-
-.section.level2 {
   flex-basis: auto !important;
 }
 
@@ -265,18 +257,6 @@ table td {
     gap: 10px;
   }
 }
-
-/* === Banner image === */ /*maybe recreate for image image
-/*.banner-image {
-  width: 100%;
-  height: auto;
-  max-height: 400px;
-  object-fit: cover;
-  display: block;
-  margin: 0 10px 20px 10px;
-  border-radius: 12px;
-  /*margin-bottom: 20px;
-}*/
 
 /* Dark theme for DataTable */
 table.dataTable.dark-theme {
