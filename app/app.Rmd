@@ -72,6 +72,34 @@ observeEvent(input$active_tab, {
 })
 ```
 
+```{r download helpers}
+# Helper functions for download UI patterns
+
+# Create conditional download button that enables when input has values
+create_download_button <- function(output_name, input_name, button_id) {
+  output[[output_name]] <- renderUI({
+    if (is.null(input[[input_name]]) || length(input[[input_name]]) == 0) {
+      tags$button("Download", class = "btn btn-download", disabled = "disabled",
+                  style = "margin-top: 25px; opacity: 0.5; cursor: not-allowed;")
+    } else {
+      downloadButton(button_id, label = 'Download', class = "btn-download",
+                     style = "margin-top: 25px;")
+    }
+  })
+}
+
+# Create download handler for CSV export
+create_csv_download <- function(handler_name, filename_prefix, data_reactive) {
+  output[[handler_name]] <- downloadHandler(
+    filename = function() {
+      paste0(filename_prefix, '_', Sys.Date(), '.csv')
+    },
+    content = function(file) {
+      write.csv(data_reactive(), file, row.names = FALSE)
+    }
+  )
+}
+```
 
 ```{r wq criteria}
 #create data frame with Utah 3D criteria for water chemistry plots; 80% complete
@@ -602,33 +630,15 @@ div(class = "download-box",
     )
 )
 
-# Conditionally render download button
-output$water_download_button <- renderUI({
-  if (is.null(input$water_download) || length(input$water_download) == 0) {
-    tags$button("Download", class = "btn btn-download", disabled = "disabled", 
-                style = "margin-top: 25px; opacity: 0.5; cursor: not-allowed;")
-  } else {
-    downloadButton('download_data', label = 'Download', class = "btn-download", 
-                   style = "margin-top: 25px;")
-  }
-})
-
 # Filter data reactively
 filtered_water_data <- reactive({
   req(input$water_download)
-  for_download_water %>%
-    filter(category %in% input$water_download)
+  for_download_water %>% filter(category %in% input$water_download)
 })
 
-# Create download
-output$download_data <- downloadHandler(
-  filename = function() {
-    paste0('wetland_waterchem_', Sys.Date(), '.csv')
-  },
-  content = function(file) {
-    write.csv(filtered_water_data(), file, row.names = FALSE)
-  }
-)
+# Setup download UI and handler
+create_download_button('water_download_button', 'water_download', 'download_data')
+create_csv_download('download_data', 'wetland_waterchem', filtered_water_data)
 ```
 
 Soil Chemistry <!-- Section 3: Soil --> 
@@ -872,33 +882,15 @@ div(class = "download-box",
     )
 )
 
-# Conditionally render download button
-output$soil_download_button <- renderUI({
-  if (is.null(input$soil_download) || length(input$soil_download) == 0) {
-    tags$button("Download", class = "btn btn-download", disabled = "disabled", 
-                style = "margin-top: 25px; opacity: 0.5; cursor: not-allowed;")
-  } else {
-    downloadButton('download_soil', label = 'Download', class = "btn-download", 
-                   style = "margin-top: 25px;")
-  }
-})
-
 # Filter data reactively
 filtered_soil_data <- reactive({
   req(input$soil_download)
-  for_download_soil %>%
-    filter(category %in% input$soil_download)
+  for_download_soil %>% filter(category %in% input$soil_download)
 })
 
-# Create download
-output$download_soil <- downloadHandler(
-  filename = function() {
-    paste0('wetland_soilchem_', Sys.Date(), '.csv')
-  },
-  content = function(file) {
-    write.csv(filtered_soil_data(), file, row.names = FALSE)
-  }
-)
+# Setup download UI and handler
+create_download_button('soil_download_button', 'soil_download', 'download_soil')
+create_csv_download('download_soil', 'wetland_soilchem', filtered_soil_data)
 ```
 
 Macroinvertebrates <!-- Section Macroinvertebrates --> 
@@ -1105,14 +1097,8 @@ div(class = "download-box",
     )
 )
 
-output$download_invert <- downloadHandler(
-  filename = function(){
-    paste0('wetland_inverts_', Sys.Date(), '.csv')
-  }, 
-  content = function(file) {
-    write.csv(for_download_invert, file, row.names = FALSE)
-  }
-)
+# Setup download handler
+create_csv_download('download_invert', 'wetland_inverts', reactive(for_download_invert))
 ```
 
 Row <!-- Section Invert Row 6: Community plot text --> 
