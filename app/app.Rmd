@@ -569,26 +569,11 @@ div(class = "summary-box",
 <!-- Water Row 5 Column 2: download data --> 
 ```{r water download}
 water <- rbind(water, outlier_water)
-for_download_water <- 
-  left_join(
-    water %>% 
-      select(-any_of(c("X", 'label', 'fraction', 'acute', 'chronic'))), 
-    water_param %>% 
-      select(parameter, definition, mdl, lrl, method, category), 
-  by = 'parameter'
-  )
-
-for_download_water <- 
-  left_join(
-    for_download_water, 
-    flags %>% 
-      select(site_param, flag), by = 'site_param')
-
-for_download_water <- 
-  left_join(
-    for_download_water, 
-    site_attr %>% 
-      select(siteid:name), by = 'siteid')
+for_download_water <- water %>%
+  select(-any_of(c("X", 'label', 'fraction', 'acute', 'chronic'))) %>%
+  left_join(water_param %>% select(parameter, definition, mdl, lrl, method, category), by = 'parameter') %>%
+  left_join(flags %>% select(site_param, flag), by = 'site_param') %>%
+  left_join(site_attr %>% select(siteid:name), by = 'siteid')
 #for_download <- for_download %>% select(oid:value, units, definition:name, ecoregion:`Wetland Type`, geometry)
 
 div(class = "download-box",
@@ -864,16 +849,10 @@ div(class = "summary-box",
 ### Download Soil Data {data-width=500}
 <!-- Soil Row 5 Column 2 - download soil data --> 
 ```{r download soil}
-for_download_soil <- left_join(
-  soil %>% select(-any_of(c("X", 'label', 'Column1'))), 
-  soil_param %>% select(-any_of(c("X", 'label', 'units'))), 
-  by = 'parameter'
-)
-
-for_download_soil <- left_join(
-  for_download_soil, 
-  site_attr %>% select(siteid, project)
-)
+for_download_soil <- soil %>%
+  select(-any_of(c("X", 'label', 'Column1'))) %>%
+  left_join(soil_param %>% select(-any_of(c("X", 'label', 'units'))), by = 'parameter') %>%
+  left_join(site_attr %>% select(siteid, project))
 div(class = "download-box",
     
     tags$p("Download soil data in a convenient format for your own analysis, research, or reporting. Choose a category below."),
@@ -1110,21 +1089,10 @@ div(class = "summary-box",
 ### Download Macroinvertebrate Data {data-width=500}
 <!-- Section Invert Row 5 Column 2: download data --> 
 ```{r invert download}
-for_download_invert <- pivot_wider( #long data to wide
-  inverts, 
-  id_cols = siteid, 
-  names_from = taxon, 
-  values_from = abundance, 
-  values_fill = NA
-)
-
-for_download_invert <- left_join(
-  for_download_invert, #add site attributes 
-  site_attr %>% select(siteid:name, latitude, longitude), 
-  by = 'siteid') %>% 
-  left_join(
-    invert_metrics, #add some metric data
-    by = 'siteid')
+for_download_invert <- inverts %>%
+  pivot_wider(id_cols = siteid, names_from = taxon, values_from = abundance, values_fill = NA) %>%
+  left_join(site_attr %>% select(siteid:name, latitude, longitude), by = 'siteid') %>%
+  left_join(invert_metrics, by = 'siteid')
 
 div(class = "download-box",
     
