@@ -98,25 +98,3 @@ create_boxplot <- function(data, y_label, caption_param, subpop_var,
 
   p
 }
-
-#' Get chart title from parameter info
-#' @param param_df Parameter data frame (water_param, soil_param, etc.)
-#' @param parameter The parameter code to look up
-#' @param label_col Column containing label (default: "label", use "definition" for inverts)
-#' @return String like "Parameter Name (units)"
-get_chart_title <- function(param_df, parameter, label_col = "label") {
-
-  info <- subset(param_df, param_df$parameter == parameter)
-  paste0(info[[label_col]][1], ' (', info$units[1], ')')
-}
-
-#' Get chart caption (label without units)
-#' @param param_df Parameter data frame
-#' @param parameter The parameter code to look up
-#' @param label_col Column containing label
-#' @return String with just the parameter name
-get_chart_caption <- function(param_df, parameter, label_col = "label") {
-
-  info <- subset(param_df, param_df$parameter == parameter)
-  info[[label_col]][1]
-}
