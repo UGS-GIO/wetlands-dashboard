@@ -554,17 +554,15 @@ subpop <- reactive({
 renderPlot({
   req(subpop())
   data_hist <- subpop()
-  param <- unique(data_hist$parameter)
-  chart_info <- subset(water_param, parameter == param)
 
   create_histogram(
     data = data_hist,
-    x_label = get_chart_title(water_param, param),
-    caption = get_chart_caption(water_param, param),
+    x_label = paste0(unique(data_hist$label)[1], ' (', unique(data_hist$units)[1], ')'),
+    caption = unique(data_hist$label)[1],
     subpop_var = input$subpop,
     facet_var = "fraction",
     facet_labels = sample_labs,
-    vline_value = chart_info$acute[1]
+    vline_value = unique(data_hist$acute)[1]
   )
 })
 ```
@@ -575,15 +573,13 @@ renderPlot({
 renderPlot({
   req(subpop())
   data_box <- subpop()
-  param <- unique(data_box$parameter)
-  chart_info <- subset(water_param, parameter == param)
 
   create_boxplot(
     data = data_box,
-    y_label = get_chart_title(water_param, param),
-    caption_param = get_chart_caption(water_param, param),
+    y_label = paste0(unique(data_box$label)[1], ' (', unique(data_box$units)[1], ')'),
+    caption_param = unique(data_box$label)[1],
     subpop_var = input$subpop,
-    hline_value = chart_info$acute[1]
+    hline_value = unique(data_box$acute)[1]
   )
 })
 ```
@@ -885,12 +881,11 @@ subpop_soil <- reactive({
 renderPlot({
   req(subpop_soil())
   data_hist <- subpop_soil()
-  param <- unique(data_hist$parameter)
 
   create_histogram(
     data = data_hist,
-    x_label = get_chart_title(soil_param, param),
-    caption = get_chart_caption(soil_param, param),
+    x_label = paste0(unique(data_hist$label)[1], ' (', unique(data_hist$units)[1], ')'),
+    caption = unique(data_hist$label)[1],
     subpop_var = input$subpop_soil
   )
 })
@@ -902,12 +897,11 @@ renderPlot({
 renderPlot({
   req(subpop_soil())
   data_box <- subpop_soil()
-  param <- unique(data_box$parameter)
 
   create_boxplot(
     data = data_box,
-    y_label = get_chart_title(soil_param, param),
-    caption_param = get_chart_caption(soil_param, param),
+    y_label = paste0(unique(data_box$label)[1], ' (', unique(data_box$units)[1], ')'),
+    caption_param = unique(data_box$label)[1],
     subpop_var = input$subpop_soil
   )
 })
@@ -1166,12 +1160,11 @@ subpop_invert <- reactive({
 renderPlot({
   req(subpop_invert())
   data_hist_invert <- subpop_invert()
-  param <- unique(data_hist_invert$parameter)
 
   create_histogram(
     data = data_hist_invert,
-    x_label = get_chart_title(invert_param, param, "definition"),
-    caption = get_chart_caption(invert_param, param, "definition"),
+    x_label = paste0(unique(data_hist_invert$label)[1], ' (', unique(data_hist_invert$units)[1], ')'),
+    caption = unique(data_hist_invert$label)[1],
     subpop_var = input$subpop_invert
   )
 })
@@ -1183,12 +1176,11 @@ renderPlot({
 renderPlot({
   req(subpop_invert())
   data_invert <- subpop_invert()
-  param <- unique(data_invert$parameter)
 
   create_boxplot(
     data = data_invert,
-    y_label = get_chart_title(invert_param, param, "definition"),
-    caption_param = get_chart_caption(invert_param, param, "definition"),
+    y_label = paste0(unique(data_invert$label)[1], ' (', unique(data_invert$units)[1], ')'),
+    caption_param = unique(data_invert$label)[1],
     subpop_var = input$subpop_invert
   )
 })
