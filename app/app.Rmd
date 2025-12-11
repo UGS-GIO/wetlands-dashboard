@@ -1161,59 +1161,23 @@ Row <!-- Section Invert Row 8: Community Plot -->
 --------------------------------------------- 
 ### Community Comparison 
 ```{r feeding group munge}
-feed_group <- inverts %>% 
-  left_join(
-    invert_taxon %>% select(taxon, feed_group), 
-    by = 'taxon') %>% 
-  group_by(siteid, feed_group) %>% 
-  summarise( #calculate abundance of feeding groups
-    feed_abund = sum(abundance), 
-    .groups = 'drop') %>% 
-  pivot_wider( #feeding groups to column names
-    names_from = feed_group, 
-    values_from = feed_abund, 
-    values_fill = 0) %>% 
-  left_join( #bring in total site abundance values
-    select(invert_metrics, siteid, abundance), 
-    by = 'siteid') %>% 
-  mutate(#calculate relative abundance of groups
-    across(-c(siteid, abundance), 
-           ~ (.x / abundance)*100)) %>% 
-  select(-abundance) %>% 
-  pivot_longer( #long format for stacked graph
-    cols = -siteid, 
-    names_to = 'group', 
-    values_to = 'rel_abnd') %>% 
-  mutate(parameter = 'feed_grp')
+feed_group <- calculate_relative_abundance(
+  inverts,
+  invert_taxon %>% select(taxon, feed_group),
+  'feed_group',
+  invert_metrics,
+  'feed_grp'
+)
 ```
 
 ```{r invert type munge}
-group_taxa <- select(invert_taxon, taxon, group)
-
-bug_type <- inverts %>% 
-  left_join(
-    group_taxa, 
-    by = 'taxon') %>% 
-  group_by(siteid, group) %>% 
-  summarise(#summarise all invert data by invert type
-    bug_abund = sum(abundance), 
-    .groups = 'drop') %>% 
-  pivot_wider(#invert type to columns
-    names_from = group, 
-    values_from = bug_abund, 
-    values_fill = 0) %>% 
-  left_join(#total site abundance
-    select(invert_metrics, siteid, abundance), 
-    by = 'siteid') %>% 
-  mutate(#calculate relative site abundance
-    across(-c(siteid, abundance), 
-           ~ (.x / abundance)*100)) %>% 
-  select(-abundance) %>% 
-  pivot_longer(
-    cols = -siteid, 
-    names_to = 'group', 
-    values_to = 'rel_abnd') %>% 
-  mutate(parameter = 'bug_type') 
+bug_type <- calculate_relative_abundance(
+  inverts,
+  invert_taxon %>% select(taxon, group),
+  'group',
+  invert_metrics,
+  'bug_type'
+) 
  
 group_map <- list(#consolidate invert types
   Snails = c('snail', 'spring_snail', 'mud_snail'), 
@@ -1244,37 +1208,20 @@ arthro_orders <- invert_taxon %>% #list of arthropod taxa
   filter(phylum == "Arthropoda") %>%
   select(taxon, order)
 
-arthro_data <- inverts %>% #subset all inverts to only arthropod
-  filter(
-    taxon %in% arthro_orders$taxon) %>%
-  left_join(
-    arthro_orders, by = "taxon") %>%
-  group_by(siteid, order) %>%
-  summarise(
-    abund = sum(abundance),
-    .groups = 'drop') %>%
-  pivot_wider( #columns = arthropod order
-    names_from = order, 
-    values_from = abund, 
-    values_fill = 0) %>%
-  left_join( #bring in total abundance by site
-    select(invert_metrics, siteid, abundance), 
-    by = "siteid") %>% 
-  mutate( #calculate relative abundance by site
-    across(-c(siteid, abundance), 
-           ~ (.x / abundance)*100)) %>% 
-  select(-abundance)
+arthro_data <- calculate_relative_abundance(
+  inverts %>% filter(taxon %in% arthro_orders$taxon),
+  arthro_orders,
+  'order',
+  invert_metrics,
+  'arthropod'
+)
 
-arthro_data$non_arthro = #put remainder in non-arthropod column
-  100 - rowSums(arthro_data[,2:ncol(arthro_data)])
-
-arthro_data <- arthro_data %>%
-  pivot_longer(
-    cols = -siteid,
-    names_to = "group",
-    values_to = "rel_abnd"
-  ) %>%
-  mutate(parameter = "arthropod")
+# Add non-arthropod remainder
+arthro_wide <- arthro_data %>%
+  pivot_wider(names_from = group, values_from = rel_abnd, values_fill = 0)
+arthro_wide$non_arthro <- 100 - rowSums(arthro_wide[,3:ncol(arthro_wide)])
+arthro_data <- arthro_wide %>%
+  pivot_longer(cols = -c(siteid, parameter), names_to = "group", values_to = "rel_abnd")
 
 arthro_map <- list( #consolidate athropod orders
   Amphipoda = ('Amphipoda'), 

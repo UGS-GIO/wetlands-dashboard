@@ -66,3 +66,24 @@ render_boxplot <- function(subpop_reactive, subpop_var, hline_col = "acute") {
     )
   })
 }
+
+#' Calculate relative abundance by group for community plots
+#' Standard pattern: join, group, summarize, pivot, calculate relative abundance
+#' @param inverts_data Inverts data frame
+#' @param lookup_data Data frame with taxon and grouping column
+#' @param group_col Name of the grouping column
+#' @param invert_metrics Data frame with total site abundance
+#' @param parameter_name Name to assign to parameter column
+calculate_relative_abundance <- function(inverts_data, lookup_data, group_col,
+                                        invert_metrics, parameter_name) {
+  inverts_data %>%
+    left_join(lookup_data, by = 'taxon') %>%
+    group_by(siteid, .data[[group_col]]) %>%
+    summarise(abund = sum(abundance), .groups = 'drop') %>%
+    pivot_wider(names_from = all_of(group_col), values_from = abund, values_fill = 0) %>%
+    left_join(select(invert_metrics, siteid, abundance), by = 'siteid') %>%
+    mutate(across(-c(siteid, abundance), ~ (.x / abundance) * 100)) %>%
+    select(-abundance) %>%
+    pivot_longer(cols = -siteid, names_to = 'group', values_to = 'rel_abnd') %>%
+    mutate(parameter = parameter_name)
+}
