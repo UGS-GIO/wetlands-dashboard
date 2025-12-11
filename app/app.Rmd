@@ -543,37 +543,13 @@ subpop <- reactive({
     select(siteid, parameter, value, fraction, acute, chronic, subpop)
 })
 
-renderPlot({
-  req(subpop())
-  data_hist <- subpop()
-
-  create_histogram(
-    data = data_hist,
-    x_label = build_legend_title(data_hist),
-    caption = unique(data_hist$label)[1],
-    subpop_var = input$subpop,
-    facet_var = "fraction",
-    facet_labels = sample_labs,
-    vline_value = unique(data_hist$acute)[1]
-  )
-})
+render_histogram_plot(subpop, input$subpop, "fraction", sample_labs)
 ```
 
 ### Group Comparison {data-width=550}
 <!-- Water Row 4 Column 2: box plot -->
 ```{r water boxplot}
-renderPlot({
-  req(subpop())
-  data_box <- subpop()
-
-  create_boxplot(
-    data = data_box,
-    y_label = build_legend_title(data_box),
-    caption_param = unique(data_box$label)[1],
-    subpop_var = input$subpop,
-    hline_value = unique(data_box$acute)[1]
-  )
-})
+render_boxplot(subpop, input$subpop)
 ```
 
 Row {data-height=650} <!-- Water Row 5: summary and download -->
@@ -862,33 +838,13 @@ subpop_soil <- reactive({
     select(siteid, parameter, value, subpop)
 })
 
-renderPlot({
-  req(subpop_soil())
-  data_hist <- subpop_soil()
-
-  create_histogram(
-    data = data_hist,
-    x_label = build_legend_title(data_hist),
-    caption = unique(data_hist$label)[1],
-    subpop_var = input$subpop_soil
-  )
-})
+render_histogram_plot(subpop_soil, input$subpop_soil, vline_col = NULL)
 ```
 
 ### Group Comparison
 <!-- Soil Row 4 Column 2 - boxplot -->
 ```{r soil boxplot}
-renderPlot({
-  req(subpop_soil())
-  data_box <- subpop_soil()
-
-  create_boxplot(
-    data = data_box,
-    y_label = build_legend_title(data_box),
-    caption_param = unique(data_box$label)[1],
-    subpop_var = input$subpop_soil
-  )
-})
+render_boxplot(subpop_soil, input$subpop_soil, hline_col = NULL)
 ```
 
 Row {data-height=650} <!-- Section Soil Row 5 - summary & download -->
@@ -1124,39 +1080,19 @@ Row <!-- Section Invert Row 4: histogram and boxplot -->
 ```{r invert histogram}
 subpop_invert <- reactive({
   req(input$subpop_invert)#MI2
-  
-  filtered_invert() %>% 
-    mutate(subpop = .data[[input$subpop_invert]]) %>% 
+
+  filtered_invert() %>%
+    mutate(subpop = .data[[input$subpop_invert]]) %>%
     select(siteid, parameter, value, subpop)
   })
 
-renderPlot({
-  req(subpop_invert())
-  data_hist_invert <- subpop_invert()
-
-  create_histogram(
-    data = data_hist_invert,
-    x_label = build_legend_title(data_hist_invert),
-    caption = unique(data_hist_invert$label)[1],
-    subpop_var = input$subpop_invert
-  )
-})
+render_histogram_plot(subpop_invert, input$subpop_invert, vline_col = NULL)
 ```
 
 ### Group Comparison
 <!-- Section Invert Row 4 Column 2: boxplot --> 
 ```{r invert boxplot}
-renderPlot({
-  req(subpop_invert())
-  data_invert <- subpop_invert()
-
-  create_boxplot(
-    data = data_invert,
-    y_label = build_legend_title(data_invert),
-    caption_param = unique(data_invert$label)[1],
-    subpop_var = input$subpop_invert
-  )
-})
+render_boxplot(subpop_invert, input$subpop_invert, hline_col = NULL)
 ```
 
 Row {data-height=650} <!-- Section Invert Row 5: summary and download -->
