@@ -4,8 +4,8 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: scroll
-    css: style.css
-    logo: images/ugs_logo_large.png
+    css: www/style.css
+    logo: www/images/ugs_logo_large.png
     includes:
       in_header: header.html
 runtime: shiny
@@ -190,10 +190,10 @@ Utah is home to <a href="https://wetlands.geology.utah.gov/" target="_blank">1.5
  
 Wetland hydrology is dynamic, often switching between deep and shallow flooding or no flooding at all. Dynamic hydrology leads to chemical and biological conditions that set wetlands apart from other aquatic ecosystems like lakes and streams. Decades of research, management, and monitoring in Utah wetlands have produced a trove of chemical, physical, and biological data, but that data is often in disparate reports written by multiple sources.This web application provides data compiled from numerous sources and presents information to the public all in one place.
 
-### 
+###
 <!-- home row 1 column 2: image -->
 <div class="figure">
-  <img src="images/bda_strawberry.jpg" alt="Beaver Dam Analog">
+  <img src="www/images/bda_strawberry.jpg" alt="Beaver Dam Analog">
   <p class="figure.caption">Beaver Dam Analog and wetland near Strawberry Reservoir</p>
 </div>
 
@@ -224,7 +224,7 @@ Row <!-- Home row 3 data sources -->
 <!-- Row 3 Column 1: image -->
 
 <div class="figure">
-  <img src="images/uwam_crew.jpg" alt="Two Wetland Ecologists">
+  <img src="www/images/uwam_crew.jpg" alt="Two Wetland Ecologists">
   <p class="figure.caption">UGS ecologists monitoring a wetland in Beaver County</p>
 </div>
 
@@ -330,10 +330,10 @@ Wetlands are often called landscape sinks—places low in the landscape where wa
 
 Data notes. Of the dozens of water chemistry parameters that can be measured, we present the parameters most indicative of wetland condition: general chemistry, nutrients, and metals/metalloids. Parameters not included in the plots below can be downloaded. For the purpose of clear data visualization we have removed outlier values, but those values are included in the data download.
 
-### 
-<!-- Water Row 1 Column 2: image --> 
+###
+<!-- Water Row 1 Column 2: image -->
 <div class="figure">
-  <img src="images/wetland_water.jpg" alt="Surface of a wetland with submerged aquatic vegetation">
+  <img src="www/images/wetland_water.jpg" alt="Surface of a wetland with submerged aquatic vegetation">
   <p class="figure.caption">Submerged aquatic vegetation in a wetland near Great Salt Lake.</p>
 </div>
 
@@ -653,7 +653,7 @@ Two types of soil measures are displayed below: general chemistry measures and n
 
 ###
 <div class="figure">
-  <img src="images/playa_soils.jpg" alt="Bare wetland soils">
+  <img src="www/images/playa_soils.jpg" alt="Bare wetland soils">
   <p class="figure.caption">A salt crust has formed on playa wetland soils near Great Salt Lake</p>
 </div>
 
@@ -902,10 +902,10 @@ Macroinvertebrates are organisms without internal skeletons that are larger than
 
 **Explore the data** using the drop-down menus to change the data topics and metrics to change the maps and charts below.
 
-### 
-<!-- Section Invert Row 1 Column 2: picture --> 
+###
+<!-- Section Invert Row 1 Column 2: picture -->
 <div class="figure">
-  <img src="images/damselfly_moab.jpg" alt="Adult blue damselfly">
+  <img src="www/images/damselfly_moab.jpg" alt="Adult blue damselfly">
   <p class="figure.caption">An adult damselfly rests on wetland vegetation near Moab. </p>
 </div>
 
