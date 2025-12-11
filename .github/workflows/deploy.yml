@@ -64,4 +64,4 @@ jobs:
           flags: '--allow-unauthenticated --port=8080 --memory=2Gi --cpu=2 --timeout=3600 --max-instances=10'
 
       - name: Show Output
-        run: echo ${{ steps.deploy.outputs.url }}
+        run: echo "${{ steps.deploy.outputs.url }}/wetlands/"
