@@ -1,7 +1,7 @@
 # Main Dockerfile - Uses pre-built base image with all dependencies
 # FOR LOCAL: Use wetland-dashboard-base:local (build with: docker build -f Dockerfile.base -t wetland-dashboard-base:local .)
 # FOR REMOTE: Use us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboard-base:latest
-FROM wetland-dashboard-base:local
+FROM us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboard-base:latest
 
 # Switch to root to copy files
 USER root
