@@ -34,7 +34,11 @@ render_histogram_plot <- function(subpop_reactive, subpop_var,
     req(subpop_reactive())
     data <- subpop_reactive()
 
-    vline_value <- if (vline_col %in% names(data)) unique(data[[vline_col]])[1] else NULL
+    vline_value <- if (!is.null(vline_col) && vline_col %in% names(data)) {
+      unique(data[[vline_col]])[1]
+    } else {
+      NULL
+    }
 
     create_histogram(
       data = data,
@@ -55,7 +59,11 @@ render_boxplot <- function(subpop_reactive, subpop_var, hline_col = "acute") {
     req(subpop_reactive())
     data <- subpop_reactive()
 
-    hline_value <- if (hline_col %in% names(data)) unique(data[[hline_col]])[1] else NULL
+    hline_value <- if (!is.null(hline_col) && hline_col %in% names(data)) {
+      unique(data[[hline_col]])[1]
+    } else {
+      NULL
+    }
 
     create_boxplot(
       data = data,

@@ -790,10 +790,11 @@ Row {data-height=500} <!-- Section Soil Row 3 -- Map -->
 ```{r soil data munge}
 soil <- add_spatial_geometry(soil, site_attr)
 
-soil <- 
+soil <-
   left_join(
-    soil, 
-    soil_param %>% select(parameter, units, label))
+    soil,
+    soil_param %>% select(parameter, units, label),
+    by = "parameter")
 
 filtered_soil <- reactive({
   req(input$soil_param)
@@ -1013,10 +1014,16 @@ invert_metrics_long <- add_spatial_geometry(invert_metrics_long, site_attr)
 
 invert_param <- data.frame(#data frame with units
   parameter = c('abundance', 'richness', 'eto_rel'),
-  definition = c('Macroinvertebrate Abundance', 
-                 'Taxa Richness', 
-                 'ETO Relative Richness'), 
+  label = c('Macroinvertebrate Abundance',
+            'Taxa Richness',
+            'ETO Relative Richness'),
   units = c('#', '#', '%')
+)
+
+invert_metrics_long <- left_join(
+  invert_metrics_long,
+  invert_param,
+  by = "parameter"
 )
 
 filtered_invert <- reactive({
@@ -1032,7 +1039,7 @@ output$invert_map <- renderLeaflet({ create_base_map() })
 observe({
   data_invert <- filtered_invert()
   req(nrow(data_invert) > 0)
-  update_map_markers("invert_map", data_invert, build_legend_title(data_invert, "definition"),
+  update_map_markers("invert_map", data_invert, build_legend_title(data_invert),
                      "invert_legend", label_func = function(d) as.character(d$value))
 })
 
@@ -1069,7 +1076,7 @@ Row {data-height=650} <!-- Section Invert Row 5: summary and download -->
 ```{r invert table}
 div(class = "summary-box",
   renderDataTable({
-    create_summary_table(subpop_invert(), invert_param, "definition")
+    create_summary_table(subpop_invert(), invert_param)
   })
 )
 ```
