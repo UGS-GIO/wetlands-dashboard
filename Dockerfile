@@ -1,14 +1,24 @@
 # Main Dockerfile - Uses pre-built base image with all dependencies
+# FOR LOCAL: Use wetland-dashboard-base:local (build with: docker build -f Dockerfile.base -t wetland-dashboard-base:local .)
+# FOR REMOTE: Use us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboard-base:latest
 FROM us-central1-docker.pkg.dev/ut-dnr-ugs-maps-prod/shiny-repo/wetland-dashboard-base:latest
 
 # Switch to root to copy files
 USER root
 
-# Copy shiny app and all data files into the Docker image
-COPY app /srv/shiny-server/
+# Copy updated shiny-server config
+COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
-# Remove default index.html if it exists
-RUN rm -f /srv/shiny-server/index.html
+# Copy shiny app into its own directory
+COPY app/ /srv/shiny-server/wetlands/
+
+# Make sure permissions are correct
+RUN chown -R shiny:shiny /srv/shiny-server/wetlands
+
+# Create log directory and file with proper permissions
+RUN mkdir -p /var/log/shiny-server && \
+    touch /var/log/shiny-server.log && \
+    chown -R shiny:shiny /var/log/shiny-server /var/log/shiny-server.log
 
 # Switch back to shiny user
 USER shiny

@@ -1,0 +1,506 @@
+/* === BODY BACKGROUND & FONT COLOR === */
+body {
+  background-color: #1B1B1B; /* Main background */
+  color: #FFFFFF;           /* Font color */
+  font-family: 'Segoe UI', sans-serif;
+  padding-top: 10px !important;
+}
+
+/* === PAGE MARGINS === */
+.dashboard-content {
+  padding-left: 100px !important;
+  padding-right: 100px !important;
+}
+
+/* === ROW STYLING === */
+.section.level2 {
+  margin-bottom: 7px !important;
+  display: flex;
+  align-items: stretch;
+  flex-basis: auto !important;
+}
+
+/* === HEADER (NAVBAR) STYLING === */
+.navbar {
+  background-color: #1B1B1B !important;   /* Header background same as body*/
+  border: 1px solid transparent;
+  border-radius: 12px; /*rounded border edges*/
+  margin: 0, 10px, 0, 10px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px; /*changed from 60*/
+  position: sticky;
+  top: 0; /*stick to top of viewport*/
+  z-index: 2000; /* Higher than Leaflet legend (1000) */
+}
+
+/* === HEADER LOGO + TITLE === */
+.navbar .navbar-brand {
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  margin: 0;
+  padding: 10px;
+  position: relative; 
+  color: #FFFFFF !important;
+  font-weight: bold;
+  font-size: 30px; /*title font height*/
+  white-space: nowrap; /* to navbar text wrap */
+}
+
+.navbar-logo img {
+  padding-left: 5px;
+  padding-right: 5px;
+  cursor: pointer; /*show it's clickable*/
+}
+
+.navbar-nav{
+  display: flex; 
+  flex-direction:row;
+  margin: 0;
+  padding:0;
+}
+
+.navbar-nav > li {
+  display: flex;
+  align-items: center;
+}
+
+/* ===NAVBAR TABS === */
+.navbar-nav > li > a {
+  color:#FFFFFF !important; /*tab font color*/
+  padding: 10px 10px;
+  border-bottom: 3px solid transparent; /*current tab and hover tab underline*/
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.navbar-nav { 
+  white-space: nowrap;
+}
+
+/* === ACTIVE TAB === */
+.navbar-nav > .active > a,
+.navbar-nav > .active > a:focus,
+.navbar-nav > .active > a:hover {
+  background-color: transparent !important;
+  font-weight: bold;
+  border-bottom: 3px solid #E69800;
+  color: #FFFFFF !important;
+}
+
+/* === HOVER TAB (non-active) === */
+.navbar-nav > li > a:hover {
+  background-color: transparent !important;
+  border-bottom: 3px solid #AAAAAA;
+  color: #FFFFFF !important;
+}
+
+
+/* === SECTION TITLES === */
+h2.section.level2 { 
+  color: #E69800;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+/* === SECTION CONTAINERS === */
+.section {
+  padding: 5px;   /* keep spacing */
+  background: none;
+  border: none;
+  margin: 0 5px, 0, 5px; /* no margin for container rows */
+}
+
+.section > .section:not(:has(.section)) {
+  background-color: #282828;   /* Row background */
+  border: 1px solid #5E5E5E;   /* Border */
+  border-radius: 12px;
+  padding: 5px;
+  margin: 0 5px 5px 5px; /* symmetric spacing */
+}
+
+/* Columns in a row have equal height (see ROW STYLING above) */
+
+.section.level2 > .section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section.level2 > .section > .chart-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.section.level2 > .section > .chart-wrapper > .chart-stage {
+  flex: 1;
+}
+
+/* Add spacing only between bullet points */
+ul li, ol li {
+  margin-bottom: 0.5em;  /* Adjust value as needed */
+}
+
+/* == row height settings (see ROW STYLING for .section.level2 flex-basis) === */
+.chart-stage-flex {
+  flex-basis: auto !important;
+}
+
+.section.level2[data-height] .chart-wrapper {
+  height: attr(data-height px) !important;
+}
+
+/* Allow chart wrappers to overflow for dropdowns */
+.chart-wrapper {
+  overflow: visible !important;
+}
+
+.chart-stage {
+  overflow: visible !important;
+}
+
+
+/* === HYPERLINK STYLING === */
+a {
+  color: #E69800;           /* Orange links */
+  text-decoration: none;
+}
+
+a:hover {
+  color: #FFFFFF;           /* Hover color */
+  text-decoration: underline;
+}
+
+/* === OPTIONAL: TABLE STYLING === */
+table {
+  background-color: #282828;
+  color: #FFFFFF;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th,
+table td {
+  border: 1px solid #5E5E5E;
+  /*padding: 10px;*/
+}
+
+/* === VALUE BOX STYLING === */
+.value-box {
+  background-color: #261900;
+  color: #FFFFFF;
+  border: 1px solid #E69800;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.value-box .icon i{
+  color: #664300 !important;  /* Set icon color */
+  font-size: 80px; /* Optional */
+}
+
+/* === DROPDOWNS === */
+/* == Dropdown Container == */
+.dropdown-container {
+  background-color: #282828;
+  color: #FFFFFF;
+  border: 1px solid #5E5E5E;   /* Border */
+  border-radius: 12px;
+  padding: 15px;
+  margin: 0 5px 5px 5px;  /* No top margin to align with sibling panel */
+  display: flex;
+  flex-direction: column;  /* Stack dropdowns vertically */
+  gap: 15px;  /* Space between dropdowns */
+  box-sizing: border-box;
+  flex: 1;  /* Stretch to fill available height */
+  align-self: stretch;
+}
+
+/* == Dropdown Item == */
+.dropdown-item {
+  display: flex;
+  flex-direction: column; /*stacks label above dropdown */
+  align-items: flex-start; /*align to left */
+  text-align: left;
+  margin: 0;
+  width: 100%;
+}
+
+.dropdown-item label {
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.dropdown-item select,
+.dropdown-item .selectize-control {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Ensure selectize dropdowns can expand without being cut off */
+.selectize-dropdown {
+  z-index: 1000 !important;
+  position: absolute !important;
+}
+
+/* Optional: remove extra Flexdashboard padding that causes tall rows */
+.section.level2, .level2 > .well {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Responsive: still stack on small screens */
+@media (max-width: 800px) {
+  .dropdown-container {
+    padding: 10px;
+    gap: 10px;
+  }
+}
+
+/* Dark theme for DataTable */
+table.dataTable.dark-theme {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+table.dataTable.dark-theme thead {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+table.dataTable.dark-theme td, 
+table.dataTable.dark-theme th {
+  border: 1px solid #444; 
+  padding: 12px 15px;
+}
+
+table.dataTable.dark-theme {
+  border-collapse: collapse; /* Ensure borders render cleanly */
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+table.dataTable.dark-theme tbody tr {
+  border-bottom: 1px solid #333;
+}
+
+table.dataTable.dark-theme tbody tr:last-child {
+  border-bottom: none;
+}
+
+table.dataTable.dark-theme tbody tr:hover {
+  background-color: #333;
+}
+
+/* Style the search box */
+.dataTables_filter input {
+  background-color: #2a2a2a;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.dataTables_filter label {
+  color: #fff;
+}
+
+/* Remove borders and shadow from the outer container */
+.dataTables_wrapper {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* dt titles and columns same width */
+.dataTables_wrapper table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+.dataTables_wrapper thead th,
+.dataTables_wrapper tbody td {
+  box-sizing: border-box;
+}
+
+/* === SUMMARY BOX === */
+.summary-box {
+  padding: 15px;
+  margin: 5px;
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto !important;
+  box-sizing: border-box;
+}
+
+/* Summary table scrolling */
+.summary-box .dataTables_wrapper {
+  overflow: auto;
+  height: 100%;
+}
+
+/* Override fixed row height for rows containing summary tables */
+.section.level2:has(.summary-box) {
+  height: 50vh !important;
+  min-height: 300px !important;
+  max-height: 500px !important;
+  display: flex !important;
+  align-items: stretch !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+}
+
+/* Make both columns in summary row stretch vertically but keep original widths */
+.section.level2:has(.summary-box) > .section.level3 {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0 !important;  /* Equal width columns */
+  overflow: hidden;
+}
+
+/* Override inline flex styles on chart-wrapper */
+.section.level2:has(.summary-box) .chart-wrapper {
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+.section.level2:has(.summary-box) .chart-stage {
+  height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+}
+
+.section.level2:has(.summary-box) .chart-shim {
+  height: 100% !important;
+  overflow: hidden !important;
+  flex: 1 !important;
+}
+
+/* Make download-box fill available space */
+.section.level2:has(.summary-box) .download-box {
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* === DOWNLOAD BOX === */
+/* Style container */
+.download-box {
+  padding: 15px;
+  margin: 5px;
+  overflow: visible !important;  /* Allow dropdowns to expand beyond container */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.download-box .selectize-dropdown {
+  z-index: 1001 !important;  /* Ensure dropdown appears above other elements */
+}
+
+/* Style for the download button */
+.btn-download {
+  background-color: #f5a623;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  margin-top: 25px;
+}
+
+.btn-download:hover {
+  background-color: #e6951c;
+  color: #000;
+}
+
+/* === FLEX CONTAINERS FOR IMAGE + CAPTION === */
+/* Caption below images */
+.figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: #282828 !important;
+  position: relative;
+  overflow: hidden;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.figure img {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  display: block;
+}
+
+/* General image rounding */
+img {
+  border-radius: 8px;
+}
+
+/* Caption styling - note: class name has literal dot */
+p.figure\.caption,
+.figure > p {
+  background-color: #282828;
+  color: #FFFFFF;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 0 0 8px 8px;
+}
+
+/* === FOOTER STYLING === */
+.custom-footer {
+  background-color: #1B1B1B;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 50px;
+  margin-bottom: 20px;
+  width: calc(100% - 200px); /* Account for 100px margins on each side */
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.custom-footer a {
+  color: #e6951c;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.custom-footer a:hover {
+  color: #e6951c;
+  text-decoration: underline;
+}
+
+/* === LEAFLET MAP STYLING === */
+.leaflet-container {
+  border-radius: 6px;
+}
