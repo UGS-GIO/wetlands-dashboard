@@ -826,7 +826,7 @@ subpop_soil <- reactive({
   req(input$subpop_soil)
   filtered_soil() %>%
     mutate(subpop = .data[[input$subpop_soil]]) %>%
-    select(siteid, parameter, value, subpop)
+    select(siteid, parameter, value, label, units, subpop)
 })
 
 render_histogram_plot(subpop_soil, input$subpop_soil, vline_col = NULL)
@@ -1050,7 +1050,7 @@ subpop_invert <- reactive({
 
   filtered_invert() %>%
     mutate(subpop = .data[[input$subpop_invert]]) %>%
-    select(siteid, parameter, value, subpop)
+    select(siteid, parameter, value, label, units, subpop)
   })
 
 render_histogram_plot(subpop_invert, input$subpop_invert, vline_col = NULL)
