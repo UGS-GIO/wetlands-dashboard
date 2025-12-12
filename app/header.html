@@ -9,6 +9,10 @@ $(document).ready(function() {
       Shiny.setInputValue('active_tab', tabId, {priority: 'event'});
     }
   });
+
+  // Make logo clickable
+  $('.navbar-logo img').wrap('<a href="https://geology.utah.gov/water/wetlands/" target="_blank" style="display: block;"></a>');
+  $('.navbar-logo a').css('cursor', 'pointer');
 });
 
 // Handler to invalidate Leaflet map size when called from R
